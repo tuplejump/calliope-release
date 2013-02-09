@@ -26,7 +26,8 @@ object CobaltBuild extends Build {
         "org.apache.cassandra" % "cassandra-all" % "1.2.1",
         "org.specs2" %% "specs2" % "1.12.3" % "test",
         "com.twitter" % "util-logging" % "6.1.0",
-        "org.cassandraunit" % "cassandra-unit" % "1.1.1.2" % "test"
+        "org.cassandraunit" % "cassandra-unit" % "1.1.1.2" % "test",
+        "org.hectorclient" % "hector-core" % "1.1-2"
       ),
 
       resolvers ++= Seq(
