@@ -11,6 +11,7 @@ import org.apache.cassandra.thrift._
 import java.nio.ByteBuffer
 import java.util.SortedMap
 import org.apache.cassandra.db.IColumn
+import com.twitter.logging.Logger
 
 /**
  * Created with IntelliJ IDEA.
@@ -20,6 +21,8 @@ import org.apache.cassandra.db.IColumn
  * To change this template use File | Settings | File Templates.
  */
 class CobaltContext(sc: SparkContext) {
+  private val logger = Logger.get(getClass)
+
   /**
    *
    * @param host
@@ -32,12 +35,19 @@ class CobaltContext(sc: SparkContext) {
     val conf = buildConf(host, port, keyspace, columnFamily)
       .getJobConf()
 
-    return sc.newAPIHadoopRDD(conf, classOf[ColumnFamilyInputFormat], classOf[ByteBuffer], classOf[SortedMap[ByteBuffer, IColumn]])
+    logger.debug("Creating cassandra connection to %s:%s for keyspace - %s and column family - %s",
+      host, port, keyspace, columnFamily)
+
+    sc.newAPIHadoopRDD(conf,
+      classOf[ColumnFamilyInputFormat],
+      classOf[ByteBuffer],
+      classOf[SortedMap[ByteBuffer, IColumn]])
 
   }
 
 
   private def buildConf(host: String, port: String, keyspace: String, columnFamily: String): ConfBuilder = {
+
     new ConfBuilder()
       .setInputInitialAddress(host)
       .setInputRpcPort(port)
@@ -87,7 +97,7 @@ private class ConfBuilder() {
   }
 
   def setInputColumnFamily(keyspace: String, columnFamily: String) = {
-    ConfigHelper.setInputColumnFamily(job.getConfiguration(), "twitterks", "users")
+    ConfigHelper.setInputColumnFamily(job.getConfiguration(), keyspace, columnFamily)
     this
   }
 

@@ -1,0 +1,33 @@
+{
+    "name": "cobaltTestKs",
+    "columnFamilies": [
+        {
+            "name": "cocoFamilyOne",
+
+            "rows": [
+                {
+                    "key": "10",
+                    "columns": [
+                        {
+                            "name": "11",
+                            "value": "11"
+                        },
+                        {
+                            "name": "12",
+                            "value": "12"
+                        }
+                    ]
+                },
+                {
+                    "key": "20",
+                    "columns": [
+                        {
+                            "name": "21",
+                            "value": "21"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
