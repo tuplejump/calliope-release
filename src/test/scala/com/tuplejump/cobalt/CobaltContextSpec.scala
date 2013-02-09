@@ -27,10 +27,12 @@ import org.apache.cassandra.db.IColumn
 class CobaltContextSpec extends Specification {
   private val logger = Logger.get(getClass)
 
-  var sc: SparkContext = _
-
-
   step {
+    initCassandra
+  }
+
+
+  def initCassandra {
     val casDir: File = new File("target/cassandra")
     if (casDir.exists() && casDir.isDirectory()) {
       FileUtils.deleteDirectory(casDir)
@@ -49,7 +51,6 @@ class CobaltContextSpec extends Specification {
     val dl = new DataLoader("Test_Cluster", "localhost")
     dl.load(new ClassPathJsonDataSet("cobaltContext1.json"))
   }
-
 
   "CobaltContext" should {
     import com.tuplejump.cobalt.CobaltContext._
@@ -72,33 +73,6 @@ class CobaltContextSpec extends Specification {
 
       val res = rdd.count()
       res must beEqualTo(2)
-    }
-  }
-
-  def unregisterBeans {
-    val mbs = ManagementFactory.getPlatformMBeanServer()
-    //val jmxObjectName = new ObjectName("org.apache.cassandra.db:type=StorageService")
-    //mbs.unregisterMBean(jmxObjectName)
-
-    val beans = mbs.queryNames(new ObjectName("org.apache.cassandra.net:*,*"), null) ++
-      mbs.queryNames(new ObjectName("org.apache.cassandra.db:*,*"), null) ++
-      mbs.queryNames(new ObjectName("org.apache.cassandra.metrics:*,*"), null)
-
-
-    beans.foreach {
-      beanName =>
-        try {
-          //val beanName = bean.getObjectName
-          logger.info("UNREGISTERING MBEAN ---- %s", beanName)
-          mbs.unregisterMBean(beanName)
-
-        } catch {
-          case _ => logger.debug("Error unregistering bean %s", beanName)
-          /* case infe:InstanceNotFoundException => logger.debug("Error unregistering bean %s", bean.getObjectName)
-          case mbre:MBeanRegistrationException => logger.debug("Error unregistering bean %s", bean.getObjectName)
-          case re: RuntimeException => logger.debug("Error unregistering bean %s", bean.getObjectName)
-          case e: Exception => logger.debug("Error unregistering bean %s", bean.getObjectName) */
-        }
     }
   }
 }
