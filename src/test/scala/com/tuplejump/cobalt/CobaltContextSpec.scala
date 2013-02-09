@@ -55,12 +55,10 @@ class CobaltContextSpec extends Specification {
   "CobaltContext" should {
     import com.tuplejump.cobalt.CobaltContext._
 
-    var rdd: RDD[(ByteBuffer, util.SortedMap[ByteBuffer, IColumn])] = null;
-
     "enable cassandraRDD on spark context" in {
 
       lazy val sc = new SparkContext("local[1]", "cobaltTest")
-      rdd = sc.cassandraRDD("localhost", "9160", "cobaltTestKs", "cocoFamilyOne")
+      val rdd = sc.cassandraRDD("localhost", "9160", "cobaltTestKs", "cocoFamilyOne")
       rdd must not beNull
 
     }
@@ -68,7 +66,7 @@ class CobaltContextSpec extends Specification {
     "must be able to run an spark action on cassandra data" in {
 
       lazy val sc = new SparkContext("local[1]", "cobaltTest")
-      rdd = sc.cassandraRDD("localhost", "9160", "cobaltTestKs", "cocoFamilyOne")
+      val rdd = sc.cassandraRDD("localhost", "9160", "cobaltTestKs", "cocoFamilyOne")
       rdd must not beNull
 
       val res = rdd.count()
