@@ -1,21 +1,15 @@
 package com.tuplejump.cobalt
 
 import org.specs2.mutable._
-import spark.{RDD, SparkContext}
-import org.apache.cassandra.service.{StorageService, CassandraDaemon, EmbeddedCassandraService}
+import spark.SparkContext
+import org.apache.cassandra.service.CassandraDaemon
 import java.util.concurrent.Executors
 import org.apache.commons.io.FileUtils
 import java.io.File
 import com.twitter.util.CountDownLatch
 import com.twitter.logging.Logger
-import management.ManagementFactory
-import javax.management.{MBeanRegistrationException, InstanceNotFoundException, ObjectName}
-import scala.collection.JavaConversions._
 import org.cassandraunit.DataLoader
 import org.cassandraunit.dataset.json.ClassPathJsonDataSet
-import java.nio.ByteBuffer
-import java.util
-import org.apache.cassandra.db.IColumn
 
 /**
  * Created with IntelliJ IDEA.
@@ -71,6 +65,31 @@ class CobaltContextSpec extends Specification {
 
       val res = rdd.count()
       res must beEqualTo(2)
+    }
+  }
+
+  "CobaltRDD" should {
+    "enable saving to cassandra" in {
+      import com.tuplejump.cobalt.CobaltContext._
+      import com.tuplejump.cobalt.CassandraRDD._
+
+      lazy val sc = new SparkContext("local[1]", "cobaltTest")
+
+      val parList = sc.parallelize(List(
+        ("key001", Map[String, String]("col1" -> "val1", "col2" -> "val2")),
+        ("key002", Map[String, String]("col1" -> "val1", "col2" -> "val2", "col3" -> "val3"))
+      ))
+
+
+      parList.saveToCassandra[String, String, String]("Test_Cluster", "cobaltTestKs", "cocoFamilyTwo")({
+        row =>
+          row._2.map(col =>
+            (row._1, (col._1, col._2))
+          ).toList
+      })
+
+      sc.cassandraRDD("cobaltTestKs", "cocoFamilyTwo").count() must beEqualTo(3)
+
     }
   }
 }

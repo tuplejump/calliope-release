@@ -38,8 +38,10 @@ class CobaltContext(sc: SparkContext) {
     logger.debug("Creating cassandra connection to %s:%s for keyspace - %s and column family - %s",
       host, port, keyspace, columnFamily)
 
-    new CassandraRDD(sc, conf)
-
+    sc.newAPIHadoopRDD(conf,
+      classOf[ColumnFamilyInputFormat],
+      classOf[ByteBuffer],
+      classOf[SortedMap[ByteBuffer, IColumn]])
   }
 
 
