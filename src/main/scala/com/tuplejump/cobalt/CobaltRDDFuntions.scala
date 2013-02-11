@@ -46,8 +46,9 @@ class CobaltRDDFuntions[T](rdd: RDD[T]) extends Serializable {
       val mutator = HFactory.createMutator(keyspace, keySerializer)
       rowEntries.foreach(
         col =>
-          mutator.insert(col._1, columnFamily, HFactory.createColumn(col._2._1, col._2._1))
+          mutator.addInsertion(col._1, columnFamily, HFactory.createColumn(col._2._1, col._2._1))
       )
+      mutator.execute()
     }
 
   }

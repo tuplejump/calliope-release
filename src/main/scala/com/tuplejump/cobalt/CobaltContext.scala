@@ -81,6 +81,7 @@ object CobaltContext {
   implicit def SparkContext2CobaltContext(sc: SparkContext) = new CobaltContext(sc)
 }
 
+//TODO: Remove from this file
 private class ConfBuilder() {
   val job = new Job()
   job.setInputFormatClass(classOf[ColumnFamilyInputFormat])
