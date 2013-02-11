@@ -17,7 +17,7 @@ import me.prettyprint.cassandra.serializers.AbstractSerializer
  * To change this template use File | Settings | File Templates.
  */
 
-class CassandraRDD[T](rdd: RDD[T]) extends Serializable {
+class CobaltRDDFuntions[T](rdd: RDD[T]) extends Serializable {
 
   def saveToCassandra[K, N, V](clusterName: String,
                                keyspaceName: String, columnFamily: String)
@@ -55,11 +55,11 @@ class CassandraRDD[T](rdd: RDD[T]) extends Serializable {
 
 }
 
-object CassandraRDD {
+object CobaltRDDFuntions {
 
   implicit val keySerializer = new CobaltStringSerializer()
 
-  implicit def RDD2CassandraRDD[T](rdd: RDD[T]) = new CassandraRDD[T](rdd)
+  implicit def RDD2CobaltRDDFuntions[T](rdd: RDD[T]) = new CobaltRDDFuntions[T](rdd)
 }
 
 class CobaltStringSerializer extends AbstractSerializer[String] with Serializable {

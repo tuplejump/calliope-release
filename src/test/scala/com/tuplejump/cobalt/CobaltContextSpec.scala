@@ -68,10 +68,10 @@ class CobaltContextSpec extends Specification {
     }
   }
 
-  "CobaltRDD" should {
+  "CobaltRDDFunctions" should {
     "enable saving to cassandra" in {
       import com.tuplejump.cobalt.CobaltContext._
-      import com.tuplejump.cobalt.CassandraRDD._
+      import com.tuplejump.cobalt.CobaltRDDFuntions._
 
       lazy val sc = new SparkContext("local[1]", "cobaltTest")
 
