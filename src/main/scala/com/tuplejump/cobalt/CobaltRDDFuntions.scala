@@ -21,32 +21,32 @@ class CobaltRDDFuntions[T](rdd: RDD[T]) extends Serializable {
 
   def saveToCassandra[K, N, V](clusterName: String,
                                keyspaceName: String, columnFamily: String)
-                              (rowMapper: (T => List[(K, (N, V))]))
+                              (rowMapper: (T => Seq[(K, (N, V))]))
                               (implicit keySerializer: Serializer[K]) {
     saveToCassandra[K, N, V]("localhost", "9160", clusterName, keyspaceName, columnFamily)(rowMapper)(keySerializer)
   }
 
   def saveToCassandra[K, N, V](host: String, port: String, clusterName: String,
                                keyspaceName: String, columnFamily: String)
-                              (rowMapper: (T => List[(K, (N, V))]))
+                              (rowMapper: (T => Seq[(K, (N, V))]))
                               (implicit keySerializer: Serializer[K]) {
     val newRdd = rdd.map {
       row => rowMapper(row)
     }
 
-    newRdd.context.runJob[List[(K, (N, V))], Unit](newRdd, {
-      x: Iterator[List[(K, (N, V))]] => x.foreach(writeToCassandra _)
+    newRdd.context.runJob[Seq[(K, (N, V))], Unit](newRdd, {
+      x: Iterator[Seq[(K, (N, V))]] => x.foreach(writeToCassandra _)
     })
 
 
 
-    def writeToCassandra(rowEntries: List[(K, (N, V))]) {
+    def writeToCassandra(rowEntries: Seq[(K, (N, V))]) {
       val cluster = HFactory.getOrCreateCluster(clusterName, new CassandraHostConfigurator(host + ":" + port))
       val keyspace = HFactory.createKeyspace(keyspaceName, cluster)
       val mutator = HFactory.createMutator(keyspace, keySerializer)
       rowEntries.foreach(
         col =>
-          mutator.addInsertion(col._1, columnFamily, HFactory.createColumn(col._2._1, col._2._1))
+          mutator.addInsertion(col._1, columnFamily, HFactory.createColumn(col._2._1, col._2._2))
       )
       mutator.execute()
     }
