@@ -82,10 +82,11 @@ class CobaltContextSpec extends Specification {
 
 
       parList.saveToCassandra[String, String, String]("Test_Cluster", "cobaltTestKs", "cocoFamilyTwo")({
-        row =>
-          row._2.map(col =>
-            (row._1, (col._1, col._2))
-          ).toList
+        case (row: String, cols: Map[String, String]) =>
+          cols.map {
+            case (colName, colValue) =>
+              (row, (colName, colValue))
+          }.toList
       })
 
       sc.cassandraRDD("cobaltTestKs", "cocoFamilyTwo").count() must beEqualTo(3)
