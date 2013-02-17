@@ -22,7 +22,7 @@ object CobaltBuild extends Build {
       fork in test := true,
 
       libraryDependencies ++= Seq(
-        "org.spark-project" % "spark-core_2.9.2" % "0.6.2",
+        "org.spark-project" % "spark-core_2.9.2" % "0.6.2-tj" % "provided",
         "org.apache.cassandra" % "cassandra-all" % "1.2.1",
         "org.specs2" %% "specs2" % "1.12.3" % "test",
         "com.twitter" % "util-logging" % "6.1.0",
@@ -31,10 +31,10 @@ object CobaltBuild extends Build {
       ),
 
       resolvers ++= Seq(
-        "sonatype" at "http://oss.sonatype.org/content/repositories/releases",
-        "Twitter's Repository" at "http://maven.twttr.com/",
-        "akka" at "http://repo.akka.io/releases/",
-        "spray" at "http://repo.spray.cc/"
+        //"sonatype" at "http://oss.sonatype.org/content/repositories/releases",
+        //"Twitter's Repository" at "http://maven.twttr.com/",
+        //"akka" at "http://repo.akka.io/releases/",
+        //"spray" at "http://repo.spray.cc/"
       )
     )
   )
