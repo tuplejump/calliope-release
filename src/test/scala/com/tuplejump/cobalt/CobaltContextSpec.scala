@@ -76,18 +76,18 @@ class CobaltContextSpec extends Specification {
       lazy val sc = new SparkContext("local[1]", "cobaltTest")
 
       val parList = sc.parallelize(List(
-        ("key001", Map[String, String]("col1" -> "val1", "col2" -> "val2")),
-        ("key002", Map[String, String]("col1" -> "val1", "col2" -> "val2", "col3" -> "val3"))
+        ("key001", Map("col1" -> "val1", "col2" -> "val2")),
+        ("key002", Map("col1" -> "val1", "col2" -> "val2", "col3" -> "val3"))
       ))
 
 
-      parList.saveToCassandra[String, String, String]("Test_Cluster", "cobaltTestKs", "cocoFamilyTwo")({
-        case (row: String, cols: Map[String, String]) =>
+      parList.saveToCassandra("Test_Cluster", "cobaltTestKs", "cocoFamilyTwo") {
+        case (row, cols) =>
           cols.map {
             case (colName, colValue) =>
               (row, (colName, colValue))
           }.toList
-      })
+      }
 
       sc.cassandraRDD("cobaltTestKs", "cocoFamilyTwo").count() must beEqualTo(3)
 

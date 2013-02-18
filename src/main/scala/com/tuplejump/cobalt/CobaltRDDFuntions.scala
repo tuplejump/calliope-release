@@ -44,10 +44,13 @@ class CobaltRDDFuntions[T](rdd: RDD[T]) extends Serializable {
       val cluster = HFactory.getOrCreateCluster(clusterName, new CassandraHostConfigurator(host + ":" + port))
       val keyspace = HFactory.createKeyspace(keyspaceName, cluster)
       val mutator = HFactory.createMutator(keyspace, keySerializer)
-      rowEntries.foreach(
-        col =>
-          mutator.addInsertion(col._1, columnFamily, HFactory.createColumn(col._2._1, col._2._2))
-      )
+      rowEntries.foreach {
+        case (rowkey, col) =>
+          col match {
+            case (colName, colValue) =>
+              mutator.addInsertion(rowkey, columnFamily, HFactory.createColumn(colName, colValue))
+          }
+      }
       mutator.execute()
     }
 
