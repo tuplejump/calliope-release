@@ -3,15 +3,14 @@ package com.tuplejump.cobalt
 import spark.{RDD, SparkContext}
 
 import org.apache.hadoop.mapreduce._
-import org.apache.hadoop.mapreduce.lib.input._
-import org.apache.hadoop.mapreduce.lib.output._
-import org.apache.hadoop.io._
 import org.apache.cassandra.hadoop._
 import org.apache.cassandra.thrift._
 import java.nio.ByteBuffer
 import java.util.SortedMap
 import org.apache.cassandra.db.IColumn
 import com.twitter.logging.Logger
+import scala.collection.JavaConversions._
+
 
 /**
  * Created with IntelliJ IDEA.

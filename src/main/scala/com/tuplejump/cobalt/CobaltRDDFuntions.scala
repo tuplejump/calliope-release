@@ -38,8 +38,6 @@ class CobaltRDDFuntions[T](rdd: RDD[T]) extends Serializable {
       x: Iterator[Seq[(K, (N, V))]] => x.foreach(writeToCassandra _)
     })
 
-
-
     def writeToCassandra(rowEntries: Seq[(K, (N, V))]) {
       val cluster = HFactory.getOrCreateCluster(clusterName, new CassandraHostConfigurator(host + ":" + port))
       val keyspace = HFactory.createKeyspace(keyspaceName, cluster)
