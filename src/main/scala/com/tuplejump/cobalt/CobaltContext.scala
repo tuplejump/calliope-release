@@ -10,6 +10,7 @@ import java.util.SortedMap
 import org.apache.cassandra.db.IColumn
 import com.twitter.logging.Logger
 import scala.collection.JavaConversions._
+
 //import collection.mutable.Map
 
 
@@ -226,10 +227,18 @@ class CobaltContext(sc: SparkContext) {
       classOf[ByteBuffer],
       classOf[SortedMap[ByteBuffer, IColumn]]).map {
       case (rowkey, row) => {
+        import RichByteBuffer._
+        val log = Logger.get("MAPLOGGER")
+        log.info("===================================================================")
+        log.info("ROW -- " + ByteBuffer2String(rowkey))
         val r = row.map {
-          case (colName, col) =>
+          case (colName, col) => {
+
+            log.info("COL -- " + ByteBuffer2String(colName))
             (colName -> col.value())
+          }
         }
+        log.info("*******************************************************************")
         (keySerializer(rowkey), tuplizer(r.toMap))
       }
     }

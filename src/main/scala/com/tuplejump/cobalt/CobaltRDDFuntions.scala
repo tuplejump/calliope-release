@@ -19,26 +19,26 @@ import me.prettyprint.cassandra.serializers.AbstractSerializer
 
 class CobaltRDDFuntions[T](rdd: RDD[T]) extends Serializable {
 
-  def saveToCassandra[K, N, V](clusterName: String,
-                               keyspaceName: String, columnFamily: String)
-                              (rowMapper: (T => Seq[(K, (N, V))]))
-                              (implicit keySerializer: Serializer[K]) {
-    saveToCassandra[K, N, V]("localhost", "9160", clusterName, keyspaceName, columnFamily)(rowMapper)(keySerializer)
+  def saveToCassandra[K](clusterName: String,
+                         keyspaceName: String, columnFamily: String)
+                        (rowMapper: (T => Seq[(K, (Any, Any))]))
+                        (implicit keySerializer: Serializer[K]) {
+    saveToCassandra[K]("localhost", "9160", clusterName, keyspaceName, columnFamily)(rowMapper)(keySerializer)
   }
 
-  def saveToCassandra[K, N, V](host: String, port: String, clusterName: String,
-                               keyspaceName: String, columnFamily: String)
-                              (rowMapper: (T => Seq[(K, (N, V))]))
-                              (implicit keySerializer: Serializer[K]) {
+  def saveToCassandra[K](host: String, port: String, clusterName: String,
+                         keyspaceName: String, columnFamily: String)
+                        (rowMapper: (T => Seq[(K, (Any, Any))]))
+                        (implicit keySerializer: Serializer[K]) {
     val newRdd = rdd.map {
       row => rowMapper(row)
     }
 
-    newRdd.context.runJob[Seq[(K, (N, V))], Unit](newRdd, {
-      x: Iterator[Seq[(K, (N, V))]] => x.foreach(writeToCassandra _)
+    newRdd.context.runJob[Seq[(K, (Any, Any))], Unit](newRdd, {
+      x: Iterator[Seq[(K, (Any, Any))]] => x.foreach(writeToCassandra _)
     })
 
-    def writeToCassandra(rowEntries: Seq[(K, (N, V))]) {
+    def writeToCassandra(rowEntries: Seq[(K, (Any, Any))]) {
       val cluster = HFactory.getOrCreateCluster(clusterName, new CassandraHostConfigurator(host + ":" + port))
       val keyspace = HFactory.createKeyspace(keyspaceName, cluster)
       val mutator = HFactory.createMutator(keyspace, keySerializer)

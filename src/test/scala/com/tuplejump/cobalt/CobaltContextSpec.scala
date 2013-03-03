@@ -30,11 +30,9 @@ class CobaltContextSpec extends Specification {
     @transient var sc: SparkContext = _
 
     def after: Any = {
-      logger.info("CHECK EXECUTION")
       if (sc != null) {
         sc.stop()
         System.clearProperty("spark.driver.port")
-        logger.info("DONE EXECUTING")
       }
     }
   }
@@ -102,7 +100,10 @@ object SparkHelper {
   import RichByteBuffer._
   import com.tuplejump.cobalt.CobaltContext._
 
-  implicit def map2casData(list: Map[ByteBuffer, ByteBuffer]): CasData = CasData(list("name"), list("age"), list("country"))
+  implicit def map2casData(map: Map[ByteBuffer, ByteBuffer]): CasData = CasData(
+    map.getOrElse[ByteBuffer]("name", "NA"),
+    map.getOrElse[ByteBuffer]("age", 0L),
+    map.getOrElse[ByteBuffer]("country", "NA"))
 
   def testcassandrRDD(sc: SparkContext) = {
     sc.cassandraRDD[String, CasData]("localhost:9160/cobaltTestKs/cocoFamilyOne")
@@ -118,9 +119,7 @@ object SparkHelper {
 
     val rdd = sc.cassandraRDD[String, CasData]("localhost:9160/cobaltTestKs/cocoFamilyOne")
 
-    val data = rdd.sortByKey().collect()
-
-    data
+    rdd.sortByKey().collect()
   }
 
   def testSaveToCasandra(sc: SparkContext) = {
@@ -128,8 +127,8 @@ object SparkHelper {
     import com.tuplejump.cobalt.CobaltRDDFuntions._
 
     val parList = sc.parallelize(List(
-      ("key001", Map("name" -> "val1", "col2" -> "val2")),
-      ("key002", Map("col1" -> "val1", "col2" -> "val2", "col3" -> "val3"))
+      ("key001", Map("name" -> "Rob", "age" -> 20L, "country" -> "USA")),
+      ("key002", Map("name" -> "Dave", "age" -> 19L, "country" -> "France"))
     ))
 
 
