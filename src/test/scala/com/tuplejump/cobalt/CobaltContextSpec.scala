@@ -5,11 +5,16 @@ import spark.SparkContext
 import org.apache.cassandra.service.CassandraDaemon
 import java.util.concurrent.Executors
 import org.apache.commons.io.FileUtils
-import java.io.File
+import java.io.{IOException, File}
 import com.twitter.util.CountDownLatch
 import com.twitter.logging.Logger
 import org.cassandraunit.DataLoader
 import org.cassandraunit.dataset.json.ClassPathJsonDataSet
+import java.nio.ByteBuffer
+import java.net.ServerSocket
+import org.specs2.specification.{AfterEach, AroundOutside}
+import org.specs2.execute.{AsResult, Result}
+import helpers.CasHelper
 
 /**
  * Created with IntelliJ IDEA.
@@ -21,85 +26,121 @@ import org.cassandraunit.dataset.json.ClassPathJsonDataSet
 class CobaltContextSpec extends Specification {
   private val logger = Logger.get(getClass)
 
-  step {
-    initCassandra
-  }
+  trait SparkTestContext extends AfterEach {
+    @transient var sc: SparkContext = _
 
-
-  def initCassandra {
-    val casDir: File = new File("target/cassandra")
-    if (casDir.exists() && casDir.isDirectory()) {
-      FileUtils.deleteDirectory(casDir)
+    def after: Any = {
+      logger.info("CHECK EXECUTION")
+      if (sc != null) {
+        sc.stop()
+        System.clearProperty("spark.driver.port")
+        logger.info("DONE EXECUTING")
+      }
     }
-
-    val executor = Executors.newCachedThreadPool()
-    val cassandra = new CassandraDaemon()
-
-    logger.info("STARTING CASSANDRA. . .")
-    val latch = new CountDownLatch(1)
-
-    executor.execute(new CassandraRunner(cassandra, latch))
-    latch.await()
-    logger.info("CASSANDRA STARTED")
-
-    val dl = new DataLoader("Test_Cluster", "localhost")
-    dl.load(new ClassPathJsonDataSet("cobaltContext1.json"))
   }
+
+  step {
+    CasHelper.initCassandra
+  }
+
 
   "CobaltContext" should {
-    import com.tuplejump.cobalt.CobaltContext._
 
-    "enable cassandraRDD on spark context" in {
+    "enable cassandraRDD on spark context" in new SparkTestContext {
+      sc = new SparkContext("local[1]", "cobaltTest")
 
-      lazy val sc = new SparkContext("local[1]", "cobaltTest")
-      val rdd = sc.cassandraRDD("localhost", "9160", "cobaltTestKs", "cocoFamilyOne")
-      rdd must not beNull
+
+      SparkHelper.testcassandrRDD(sc) must not beNull
+
+      sc must not beNull
 
     }
 
-    "must be able to run an spark action on cassandra data" in {
+    "must be able to run an spark action on cassandra data" in new SparkTestContext {
+      sc = new SparkContext("local[1]", "cobaltTest")
 
-      lazy val sc = new SparkContext("local[1]", "cobaltTest")
-      val rdd = sc.cassandraRDD("localhost", "9160", "cobaltTestKs", "cocoFamilyOne")
-      rdd must not beNull
-
-      val res = rdd.count()
-      res must beEqualTo(2)
+      SparkHelper.testSparkActionsOnCas(sc) must not beNull
     }
+
+    "must be able to fetch correct data from cassandra" in new SparkTestContext {
+      sc = new SparkContext("local[1]", "cobaltTest")
+
+      val data = SparkHelper.testFetchData(sc)
+
+      data(0)._1 must beEqualTo("keyOne")
+      data(1)._1 must beEqualTo("keyTwo")
+
+
+      val firstRow = data(0)._2
+      firstRow.name must beEqualTo("John")
+      firstRow.age must beEqualTo(12)
+      firstRow.country must beEqualTo("USA")
+
+      val secRow = data(1)._2
+      secRow.name must beEqualTo("Jane")
+      secRow.age must beEqualTo(11)
+      secRow.country must beEqualTo("UK")
+
+    }
+
   }
 
   "CobaltRDDFunctions" should {
-    "enable saving to cassandra" in {
-      import com.tuplejump.cobalt.CobaltContext._
-      import com.tuplejump.cobalt.CobaltRDDFuntions._
+    "enable saving to cassandra" in new SparkTestContext {
+      sc = new SparkContext("local[1]", "cobaltTest")
 
-      lazy val sc = new SparkContext("local[1]", "cobaltTest")
-
-      val parList = sc.parallelize(List(
-        ("key001", Map("col1" -> "val1", "col2" -> "val2")),
-        ("key002", Map("col1" -> "val1", "col2" -> "val2", "col3" -> "val3"))
-      ))
-
-
-      parList.saveToCassandra("Test_Cluster", "cobaltTestKs", "cocoFamilyTwo") {
-        case (row, cols) =>
-          cols.map {
-            case (colName, colValue) =>
-              (row, (colName, colValue))
-          }.toList
-      }
-
-      sc.cassandraRDD("cobaltTestKs", "cocoFamilyTwo").count() must beEqualTo(3)
+      SparkHelper.testSaveToCasandra(sc) must beEqualTo(3)
 
     }
   }
 }
 
-class CassandraRunner(cassandra: CassandraDaemon, latch: CountDownLatch) extends Runnable {
-  def run() {
-    cassandra.init(null)
-    cassandra.start()
-    latch.countDown()
+case class CasData(name: String, age: Long, country: String)
+
+object SparkHelper {
+
+  import RichByteBuffer._
+  import com.tuplejump.cobalt.CobaltContext._
+
+  implicit def map2casData(list: Map[ByteBuffer, ByteBuffer]): CasData = CasData(list("name"), list("age"), list("country"))
+
+  def testcassandrRDD(sc: SparkContext) = {
+    sc.cassandraRDD[String, CasData]("localhost:9160/cobaltTestKs/cocoFamilyOne")
   }
 
+  def testSparkActionsOnCas(sc: SparkContext) = {
+    val rdd = sc.cassandraRDD[String, CasData]("localhost:9160/cobaltTestKs/cocoFamilyOne")
+    rdd.count()
+  }
+
+  def testFetchData(sc: SparkContext) = {
+    import SparkContext._
+
+    val rdd = sc.cassandraRDD[String, CasData]("localhost:9160/cobaltTestKs/cocoFamilyOne")
+
+    val data = rdd.sortByKey().collect()
+
+    data
+  }
+
+  def testSaveToCasandra(sc: SparkContext) = {
+    import com.tuplejump.cobalt.CobaltContext._
+    import com.tuplejump.cobalt.CobaltRDDFuntions._
+
+    val parList = sc.parallelize(List(
+      ("key001", Map("name" -> "val1", "col2" -> "val2")),
+      ("key002", Map("col1" -> "val1", "col2" -> "val2", "col3" -> "val3"))
+    ))
+
+
+    parList.saveToCassandra("Test_Cluster", "cobaltTestKs", "cocoFamilyTwo") {
+      case (row, cols) =>
+        cols.map {
+          case (colName, colValue) =>
+            (row, (colName, colValue))
+        }.toList
+    }
+
+    sc.cassandraRDD[String, CasData]("cobaltTestKs/cocoFamilyTwo").count()
+  }
 }

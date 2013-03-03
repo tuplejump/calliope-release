@@ -16,14 +16,6 @@ class RichByteBufferSpec extends Specification {
 
     import RichByteBuffer._
 
-    "implicitly enhance ByteBuffer" in {
-      val b: ByteBuffer = ByteBufferUtil.bytes("Test")
-      val r: RichByteBuffer = b
-      r must not beNull
-
-      r.getClass.getSimpleName must beEqualTo("RichByteBuffer")
-    }
-
     "add implicit conversion of ByteBuffer to String" in {
       val b: ByteBuffer = ByteBufferUtil.bytes("Test")
 
@@ -49,11 +41,12 @@ class RichByteBufferSpec extends Specification {
       (300l - b) must beEqualTo(200l)
     }
 
-    "must ease the conversion of list to case class" in {
+    "ease the conversion of list to case class" in {
       case class Person(name: String, age: Int)
       val l: List[ByteBuffer] = List("Joey", 10)
 
-      def list2Person(list: List[ByteBuffer]) = Person(list(0), list(1))
+      def list2Person(list: List[ByteBuffer]) = Person(list(0), list(1)) //One line boiler plate
+
       val p = list2Person(l)
 
       p.getClass.toString mustEqual (classOf[Person].toString)
@@ -62,10 +55,11 @@ class RichByteBufferSpec extends Specification {
       p.age mustEqual (10)
     }
 
-    "must ease the conversion to typed Tuple" in {
+    "ease the conversion to typed Tuple" in {
       val l: List[ByteBuffer] = List("Joey", 10)
 
-      def list2Tuple2(list: List[ByteBuffer]) = new Tuple2[String, Int](list(0), list(1))
+      def list2Tuple2(list: List[ByteBuffer]) = new Tuple2[String, Int](list(0), list(1)) //One list boiler plate
+
       val p = list2Tuple2(l)
 
       p.getClass.toString mustEqual (classOf[Tuple2[String, Int]].toString)

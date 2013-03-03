@@ -3,27 +3,43 @@
     "columnFamilies": [
         {
             "name": "cocoFamilyOne",
+            "keyType": "UTF8Type",
+            "comparatorType": "UTF8Type",
+            "defaultColumnValueType": "UTF8Type",
 
             "rows": [
                 {
-                    "key": "10",
+                    "key": "keyOne",
                     "columns": [
                         {
-                            "name": "11",
-                            "value": "11"
+                            "name": "name",
+                            "value": "John"
                         },
                         {
-                            "name": "12",
-                            "value": "12"
+                            "name": "age",
+                            "value": "long(12)"
+                        },
+                        {
+                            "name": "country",
+                            "value": "USA"
                         }
+
                     ]
                 },
                 {
-                    "key": "20",
+                    "key": "keyTwo",
                     "columns": [
                         {
-                            "name": "21",
-                            "value": "21"
+                            "name": "name",
+                            "value": "Jane"
+                        },
+                        {
+                            "name": "age",
+                            "value": "long(11)"
+                        },
+                        {
+                            "name": "country",
+                            "value": "UK"
                         }
                     ]
                 }
@@ -31,19 +47,26 @@
         },
         {
             "name": "cocoFamilyTwo",
-
+            "keyType": "UTF8Type",
+            "comparatorType": "UTF8Type",
+            "defaultColumnValueType": "UTF8Type",
             "rows": [
                 {
-                    "key": "10",
+                    "key": "keyOne",
                     "columns": [
                         {
-                            "name": "11",
-                            "value": "11"
+                            "name": "name",
+                            "value": "John"
                         },
                         {
-                            "name": "12",
-                            "value": "12"
+                            "name": "age",
+                            "value": "long(12)"
+                        },
+                        {
+                            "name": "country",
+                            "value": "USA"
                         }
+
                     ]
                 }
             ]

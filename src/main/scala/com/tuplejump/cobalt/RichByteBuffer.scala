@@ -13,16 +13,8 @@ import com.twitter.logging.Logger
  * To change this template use File | Settings | File Templates.
  */
 
-class RichByteBuffer(byteBuffer: ByteBuffer) {
-
-}
 
 object RichByteBuffer {
-
-  import shapeless._
-  import HList._
-  import Typeable._
-
 
   /* ByteBuffer to Typed Objects */
   implicit def ByteBuffer2Int(buffer: ByteBuffer): Int = ByteBufferUtil.toInt(buffer)
@@ -37,10 +29,6 @@ object RichByteBuffer {
 
   implicit def ByteBuffer2String(buffer: ByteBuffer, charset: Charset): String = ByteBufferUtil.string(buffer, charset)
 
-  implicit def ByteBuffer2Any(buffer: ByteBuffer): Any = {
-    buffer
-  }
-
 
   /* Typed objects to ByteBuffer */
   implicit def String2ByteBuffer(str: String): ByteBuffer = ByteBufferUtil.bytes(str)
@@ -53,8 +41,5 @@ object RichByteBuffer {
 
   implicit def Long2ByteBuffer(l: Long): ByteBuffer = ByteBufferUtil.bytes(l)
 
-  implicit def ByteBuffer2RichByteBuffer(b: ByteBuffer): RichByteBuffer = {
-    new RichByteBuffer(b)
-  }
 }
 
