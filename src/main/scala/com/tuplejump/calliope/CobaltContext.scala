@@ -1,6 +1,5 @@
-package com.tuplejump.cobalt
+package com.tuplejump.cobalt.calliope
 
-import query.{Query, InitializedQuery}
 import spark.{RDD, SparkContext}
 
 import org.apache.cassandra.hadoop._
@@ -10,6 +9,7 @@ import java.util.SortedMap
 import org.apache.cassandra.db.IColumn
 import com.twitter.logging.Logger
 import scala.collection.JavaConversions._
+import com.tuplejump.cobalt.query.InitializedQuery
 
 //import collection.mutable.Map
 
@@ -44,7 +44,7 @@ class CobaltContext(sc: SparkContext) {
    * Query.where("colName").eq("value")
    *
    * @param keySerializer The function to read the key value from a ByteBuffer. Standard converters are provided in
-   *                      [[com.tuplejump.cobalt.RichByteBuffer]] so importing the implicits from this object should be sufficient.
+   *                      [[RichByteBuffer]] so importing the implicits from this object should be sufficient.
    *
    * @example
    * import com.tuplejump.cobalt.RichByteBuffer._
@@ -52,7 +52,7 @@ class CobaltContext(sc: SparkContext) {
    * @param tuplizer This is the function that take a row and maps it to a you expect in return.
    *                 The row is a Map[ByteBuffer, ByteBuffer] for columnName -> columnValue. We call this the tuplizer,
    *                 as it is the recommended approach to take the response as a tuple or a case class (Product). A simple
-   *                 can be created with the help of[[com.tuplejump.cobalt.RichByteBuffer]]. It can be used to create the
+   *                 can be created with the help of[[RichByteBuffer]]. It can be used to create the
    *                 RDDs from selected columns too.
    *
    * @example
@@ -98,7 +98,7 @@ class CobaltContext(sc: SparkContext) {
    * @param from The path to keyspace (either host:port/ksName or just the ksName)
    *
    * @param keySerializer The function to read the key value from a ByteBuffer. Standard converters are provided in
-   *                      [[com.tuplejump.cobalt.RichByteBuffer]] so importing the implicits from this object should be sufficient.
+   *                      [[RichByteBuffer]] so importing the implicits from this object should be sufficient.
    *
    * @example
    * import com.tuplejump.cobalt.RichByteBuffer._
@@ -106,7 +106,7 @@ class CobaltContext(sc: SparkContext) {
    * @param tuplizer This is the function that take a row and maps it to a you expect in return.
    *                 The row is a Map[ByteBuffer, ByteBuffer] for columnName -> columnValue. We call this the tuplizer,
    *                 as it is the recommended approach to take the response as a tuple or a case class (Product). A simple
-   *                 can be created with the help of[[com.tuplejump.cobalt.RichByteBuffer]]. It can be used to create the
+   *                 can be created with the help of[[RichByteBuffer]]. It can be used to create the
    *                 RDDs from selected columns too.
    *
    * @example
@@ -143,7 +143,7 @@ class CobaltContext(sc: SparkContext) {
    *                      memory cached. Fetching the whole row will be much faster than restricting to columns.
    *
    * @param keySerializer The function to read the key value from a ByteBuffer. Standard converters are provided in
-   *                      [[com.tuplejump.cobalt.RichByteBuffer]] so importing the implicits from this object should be sufficient.
+   *                      [[RichByteBuffer]] so importing the implicits from this object should be sufficient.
    *
    * @example
    * import com.tuplejump.cobalt.RichByteBuffer._
@@ -151,7 +151,7 @@ class CobaltContext(sc: SparkContext) {
    * @param tuplizer This is the function that take a row and maps it to a you expect in return.
    *                 The row is a Map[ByteBuffer, ByteBuffer] for columnName -> columnValue. We call this the tuplizer,
    *                 as it is the recommended approach to take the response as a tuple or a case class (Product). A simple
-   *                 can be created with the help of[[com.tuplejump.cobalt.RichByteBuffer]]. It can be used to create the
+   *                 can be created with the help of[[RichByteBuffer]]. It can be used to create the
    *                 RDDs from selected columns too.
    *
    * @example
@@ -189,7 +189,7 @@ class CobaltContext(sc: SparkContext) {
    * Query.where("colName").eq("value")
    *
    * @param keySerializer The function to read the key value from a ByteBuffer. Standard converters are provided in
-   *                      [[com.tuplejump.cobalt.RichByteBuffer]] so importing the implicits from this object should be sufficient.
+   *                      [[RichByteBuffer]] so importing the implicits from this object should be sufficient.
    *
    * @example
    * import com.tuplejump.cobalt.RichByteBuffer._
@@ -197,7 +197,7 @@ class CobaltContext(sc: SparkContext) {
    * @param tuplizer This is the function that take a row and maps it to a you expect in return.
    *                 The row is a Map[ByteBuffer, ByteBuffer] for columnName -> columnValue. We call this the tuplizer,
    *                 as it is the recommended approach to take the response as a tuple or a case class (Product). A simple
-   *                 can be created with the help of[[com.tuplejump.cobalt.RichByteBuffer]]. It can be used to create the
+   *                 can be created with the help of[[RichByteBuffer]]. It can be used to create the
    *                 RDDs from selected columns too.
    *
    * @example

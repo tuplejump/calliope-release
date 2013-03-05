@@ -1,4 +1,4 @@
-package com.tuplejump.cobalt
+package com.tuplejump.cobalt.calliope
 
 import org.specs2.mutable._
 import java.nio.ByteBuffer

@@ -1,9 +1,8 @@
-package com.tuplejump.cobalt
+package com.tuplejump.cobalt.calliope
 
 import org.apache.hadoop.mapreduce.Job
 import org.apache.cassandra.hadoop.{ConfigHelper, ColumnFamilyInputFormat}
 import org.apache.cassandra.thrift.{IndexExpression, SliceRange, SlicePredicate}
-import query.Query
 import scala.collection.JavaConversions._
 
 /**

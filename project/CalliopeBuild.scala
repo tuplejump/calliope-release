@@ -2,24 +2,24 @@ import sbt._
 import sbt.Keys._
 import sbt.Classpaths.publishTask
 
-object CobaltBuild extends Build {
+object CalliopeBuild extends Build {
 
   lazy val MavenCompile = config("m2r") extend (Compile)
   lazy val publishLocalBoth = TaskKey[Unit]("publish-local", "publish local for m2 and ivy")
 
   lazy val cobalt = Project(
 
-    id = "cobalt-lib",
+    id = "calliope",
 
     base = file("."),
 
     settings = Project.defaultSettings ++ Seq(
 
-      name := "cobalt-lib",
+      name := "calliope",
 
-      organization := "com.tuplejump.cobalt",
+      organization := "com.tuplejump.calliope",
 
-      version := "0.0.5-SNAPSHOT",
+      version := "0.0.9-SNAPSHOT",
 
       scalaVersion := "2.9.2",
 

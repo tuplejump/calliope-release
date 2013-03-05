@@ -2,7 +2,8 @@ package com.tuplejump.cobalt.query
 
 import org.specs2.mutable._
 import com.tuplejump.cobalt.query._
-import com.tuplejump.cobalt.RichByteBuffer._
+import com.tuplejump.cobalt.calliope.RichByteBuffer
+import RichByteBuffer._
 import org.apache.cassandra.thrift.IndexOperator
 
 /**

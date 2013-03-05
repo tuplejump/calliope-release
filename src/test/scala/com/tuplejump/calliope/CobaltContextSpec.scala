@@ -1,4 +1,4 @@
-package com.tuplejump.cobalt
+package com.tuplejump.cobalt.calliope
 
 import org.specs2.mutable._
 import spark.SparkContext
@@ -80,12 +80,6 @@ class CobaltContextSpec extends Specification {
 
       val data = SparkHelper.testSaveToCasandra(sc)
 
-
-      data.foreach {
-        d =>
-          print(d)
-      }
-
       data(0)._1 must beEqualTo("key001")
       data(1)._1 must beEqualTo("key002")
 
@@ -109,7 +103,7 @@ case class CasData(name: String, age: Long, country: String)
 object SparkHelper {
 
   import RichByteBuffer._
-  import com.tuplejump.cobalt.CobaltContext._
+  import CobaltContext._
 
   implicit def map2casData(map: Map[ByteBuffer, ByteBuffer]): CasData = CasData(
     map.getOrElse[ByteBuffer]("name", "NA"),
@@ -134,8 +128,8 @@ object SparkHelper {
   }
 
   def testSaveToCasandra(sc: SparkContext) = {
-    import com.tuplejump.cobalt.CobaltContext._
-    import com.tuplejump.cobalt.CobaltRDDFuntions._
+    import CobaltContext._
+    import CobaltRDDFuntions._
     import SparkContext._
 
     val parList = sc.parallelize(List(
@@ -143,12 +137,13 @@ object SparkHelper {
       ("key002", CasData("Dave", 19L, "France"))
     ))
 
-
-    parList.saveToCassandra[String, String, Any]("Test_Cluster", "cobaltTestKs", "cocoFamilyTwo") {
-      case (k, v) => {
-        (k, Map("name" -> v.name, "age" -> v.age, "country" -> v.country))
+    implicit def casData2Map(t: (String, CasData)): (String, Map[String, Any]) = {
+      t match {
+        case (k, v) => (k, Map("name" -> v.name, "age" -> v.age, "country" -> v.country))
       }
     }
+
+    parList.saveToCassandra[String, String, Any]("Test_Cluster", "cobaltTestKs", "cocoFamilyTwo")
 
     sc.cassandraRDD[String, CasData]("cobaltTestKs/cocoFamilyTwo").sortByKey().collect()
   }

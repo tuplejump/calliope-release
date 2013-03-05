@@ -1,4 +1,4 @@
-package com.tuplejump.cobalt
+package com.tuplejump.cobalt.calliope
 
 import spark.RDD
 import scala.Predef._
@@ -19,15 +19,15 @@ class CobaltRDDFuntions[T](self: RDD[T]) extends Serializable {
 
   def saveToCassandra[K, X, Y](clusterName: String,
                                keyspaceName: String, columnFamily: String)
-                              (rowMapper: (T => (K, Map[X, Y])))
-                              (implicit keySerializer: Serializer[K]) {
-    saveToCassandra[K, X, Y]("localhost", "9160", clusterName, keyspaceName, columnFamily)(rowMapper)(keySerializer)
+                              (implicit rowMapper: (T => (K, Map[X, Y])),
+                               keySerializer: Serializer[K]) {
+    saveToCassandra[K, X, Y]("localhost", "9160", clusterName, keyspaceName, columnFamily)
   }
 
   def saveToCassandra[K, X, Y](host: String, port: String, clusterName: String,
                                keyspaceName: String, columnFamily: String)
-                              (rowMapper: (T => (K, Map[X, Y])))
-                              (implicit keySerializer: Serializer[K]) {
+                              (implicit rowMapper: (T => (K, Map[X, Y])),
+                               keySerializer: Serializer[K]) {
 
     val newRdd = self.map {
       rowMapper(_)
@@ -97,30 +97,3 @@ class CobaltStringSerializer extends AbstractSerializer[String] with Serializabl
     return UTF8TYPE
   }
 }
-
-/* class CassandraWriter(host: String, port: Int, keyspace: String, colFamily: String) {
-
-  import RichByteBuffer._
-
-  val tr = new TFramedTransport(new TSocket(host, port));
-  val proto = new TBinaryProtocol(tr);
-  val client = new Cassandra.Client(proto);
-  tr.open();
-
-  client.set_keyspace(keyspace)
-  val family = new ColumnParent(colFamily)
-
-  def writeToCassandra(rowEntries: Seq[(Any, (Any, Any))]) {
-    rowEntries.foreach {
-      case (rowkey, col) =>
-        col match {
-          case (colName, colValue) =>
-            val column = new Column(colName)
-            mutator.addInsertion(rowkey, columnFamily, HFactory.createColumn(colName, colValue))
-        }
-    }
-    mutator.execute()
-  }
-}  */
-
-

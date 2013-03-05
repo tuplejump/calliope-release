@@ -1,4 +1,4 @@
-package com.tuplejump.cobalt
+package com.tuplejump.cobalt.calliope
 
 import java.nio.ByteBuffer
 import org.apache.cassandra.utils.ByteBufferUtil
