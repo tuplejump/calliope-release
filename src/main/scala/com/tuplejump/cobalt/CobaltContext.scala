@@ -228,17 +228,12 @@ class CobaltContext(sc: SparkContext) {
       classOf[SortedMap[ByteBuffer, IColumn]]).map {
       case (rowkey, row) => {
         import RichByteBuffer._
-        val log = Logger.get("MAPLOGGER")
-        log.info("===================================================================")
-        log.info("ROW -- " + ByteBuffer2String(rowkey))
+        val rowId = ByteBuffer2String(rowkey)
         val r = row.map {
           case (colName, col) => {
-
-            log.info("COL -- " + ByteBuffer2String(colName))
             (colName -> col.value())
           }
         }
-        log.info("*******************************************************************")
         (keySerializer(rowkey), tuplizer(r.toMap))
       }
     }

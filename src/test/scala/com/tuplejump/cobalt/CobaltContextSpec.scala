@@ -2,18 +2,9 @@ package com.tuplejump.cobalt
 
 import org.specs2.mutable._
 import spark.SparkContext
-import org.apache.cassandra.service.CassandraDaemon
-import java.util.concurrent.Executors
-import org.apache.commons.io.FileUtils
-import java.io.{IOException, File}
-import com.twitter.util.CountDownLatch
 import com.twitter.logging.Logger
-import org.cassandraunit.DataLoader
-import org.cassandraunit.dataset.json.ClassPathJsonDataSet
 import java.nio.ByteBuffer
-import java.net.ServerSocket
-import org.specs2.specification.{AfterEach, AroundOutside}
-import org.specs2.execute.{AsResult, Result}
+import org.specs2.specification.AfterEach
 import helpers.CasHelper
 
 /**
@@ -87,7 +78,27 @@ class CobaltContextSpec extends Specification {
     "enable saving to cassandra" in new SparkTestContext {
       sc = new SparkContext("local[1]", "cobaltTest")
 
-      SparkHelper.testSaveToCasandra(sc) must beEqualTo(3)
+      val data = SparkHelper.testSaveToCasandra(sc)
+
+
+      data.foreach {
+        d =>
+          print(d)
+      }
+
+      data(0)._1 must beEqualTo("key001")
+      data(1)._1 must beEqualTo("key002")
+
+
+      val firstRow = data(0)._2
+      firstRow.name must beEqualTo("Rob")
+      firstRow.age must beEqualTo(20)
+      firstRow.country must beEqualTo("USA")
+
+      val secRow = data(1)._2
+      secRow.name must beEqualTo("Dave")
+      secRow.age must beEqualTo(19)
+      secRow.country must beEqualTo("France")
 
     }
   }
@@ -125,21 +136,20 @@ object SparkHelper {
   def testSaveToCasandra(sc: SparkContext) = {
     import com.tuplejump.cobalt.CobaltContext._
     import com.tuplejump.cobalt.CobaltRDDFuntions._
+    import SparkContext._
 
     val parList = sc.parallelize(List(
-      ("key001", Map("name" -> "Rob", "age" -> 20L, "country" -> "USA")),
-      ("key002", Map("name" -> "Dave", "age" -> 19L, "country" -> "France"))
+      ("key001", CasData("Rob", 20L, "USA")),
+      ("key002", CasData("Dave", 19L, "France"))
     ))
 
 
-    parList.saveToCassandra("Test_Cluster", "cobaltTestKs", "cocoFamilyTwo") {
-      case (row, cols) =>
-        cols.map {
-          case (colName, colValue) =>
-            (row, (colName, colValue))
-        }.toList
+    parList.saveToCassandra[String, String, Any]("Test_Cluster", "cobaltTestKs", "cocoFamilyTwo") {
+      case (k, v) => {
+        (k, Map("name" -> v.name, "age" -> v.age, "country" -> v.country))
+      }
     }
 
-    sc.cassandraRDD[String, CasData]("cobaltTestKs/cocoFamilyTwo").count()
+    sc.cassandraRDD[String, CasData]("cobaltTestKs/cocoFamilyTwo").sortByKey().collect()
   }
 }

@@ -7,8 +7,6 @@ import me.prettyprint.hector.api.Serializer
 import me.prettyprint.cassandra.service.CassandraHostConfigurator
 import me.prettyprint.cassandra.serializers.AbstractSerializer
 
-//import me.prettyprint.cassandra.serializers.StringSerializer
-
 /**
  * Created with IntelliJ IDEA.
  * User: rohit
@@ -17,38 +15,42 @@ import me.prettyprint.cassandra.serializers.AbstractSerializer
  * To change this template use File | Settings | File Templates.
  */
 
-class CobaltRDDFuntions[T](rdd: RDD[T]) extends Serializable {
+class CobaltRDDFuntions[T](self: RDD[T]) extends Serializable {
 
-  def saveToCassandra[K](clusterName: String,
-                         keyspaceName: String, columnFamily: String)
-                        (rowMapper: (T => Seq[(K, (Any, Any))]))
-                        (implicit keySerializer: Serializer[K]) {
-    saveToCassandra[K]("localhost", "9160", clusterName, keyspaceName, columnFamily)(rowMapper)(keySerializer)
+  def saveToCassandra[K, X, Y](clusterName: String,
+                               keyspaceName: String, columnFamily: String)
+                              (rowMapper: (T => (K, Map[X, Y])))
+                              (implicit keySerializer: Serializer[K]) {
+    saveToCassandra[K, X, Y]("localhost", "9160", clusterName, keyspaceName, columnFamily)(rowMapper)(keySerializer)
   }
 
-  def saveToCassandra[K](host: String, port: String, clusterName: String,
-                         keyspaceName: String, columnFamily: String)
-                        (rowMapper: (T => Seq[(K, (Any, Any))]))
-                        (implicit keySerializer: Serializer[K]) {
-    val newRdd = rdd.map {
-      row => rowMapper(row)
+  def saveToCassandra[K, X, Y](host: String, port: String, clusterName: String,
+                               keyspaceName: String, columnFamily: String)
+                              (rowMapper: (T => (K, Map[X, Y])))
+                              (implicit keySerializer: Serializer[K]) {
+
+    val newRdd = self.map {
+      rowMapper(_)
     }
 
-    newRdd.context.runJob[Seq[(K, (Any, Any))], Unit](newRdd, {
-      x: Iterator[Seq[(K, (Any, Any))]] => x.foreach(writeToCassandra _)
-    })
+    newRdd.context.runJob[(K, Map[X, Y]), Unit](newRdd,
+      writeToCassandra _
+    )
 
-    def writeToCassandra(rowEntries: Seq[(K, (Any, Any))]) {
+    def writeToCassandra(i: Iterator[(K, Map[X, Y])]) {
+
       val cluster = HFactory.getOrCreateCluster(clusterName, new CassandraHostConfigurator(host + ":" + port))
       val keyspace = HFactory.createKeyspace(keyspaceName, cluster)
       val mutator = HFactory.createMutator(keyspace, keySerializer)
-      rowEntries.foreach {
-        case (rowkey, col) =>
-          col match {
-            case (colName, colValue) =>
-              mutator.addInsertion(rowkey, columnFamily, HFactory.createColumn(colName, colValue))
+
+      i.foreach {
+        case (rowKey, colMap) =>
+          colMap.map {
+            case (cname, cval) =>
+              mutator.addInsertion(rowKey, columnFamily, HFactory.createColumn(cname, cval))
           }
       }
+
       mutator.execute()
     }
 
@@ -61,7 +63,7 @@ object CobaltRDDFuntions {
 
   implicit val keySerializer = new CobaltStringSerializer()
 
-  implicit def RDD2CobaltRDDFuntions[T](rdd: RDD[T]) = new CobaltRDDFuntions[T](rdd)
+  implicit def RDD2CobaltRDD[T](rdd: RDD[T]) = new CobaltRDDFuntions[T](rdd)
 }
 
 class CobaltStringSerializer extends AbstractSerializer[String] with Serializable {
@@ -95,5 +97,30 @@ class CobaltStringSerializer extends AbstractSerializer[String] with Serializabl
     return UTF8TYPE
   }
 }
+
+/* class CassandraWriter(host: String, port: Int, keyspace: String, colFamily: String) {
+
+  import RichByteBuffer._
+
+  val tr = new TFramedTransport(new TSocket(host, port));
+  val proto = new TBinaryProtocol(tr);
+  val client = new Cassandra.Client(proto);
+  tr.open();
+
+  client.set_keyspace(keyspace)
+  val family = new ColumnParent(colFamily)
+
+  def writeToCassandra(rowEntries: Seq[(Any, (Any, Any))]) {
+    rowEntries.foreach {
+      case (rowkey, col) =>
+        col match {
+          case (colName, colValue) =>
+            val column = new Column(colName)
+            mutator.addInsertion(rowkey, columnFamily, HFactory.createColumn(colName, colValue))
+        }
+    }
+    mutator.execute()
+  }
+}  */
 
 
