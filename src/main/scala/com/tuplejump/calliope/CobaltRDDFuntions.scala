@@ -19,14 +19,19 @@ class CobaltRDDFuntions[T](self: RDD[T]) extends Serializable {
 
   def saveToCassandra[K, X, Y](clusterName: String,
                                keyspaceName: String, columnFamily: String)
+                              (rowMapper: (T => (K, Map[X, Y])))(implicit keySerializer: Serializer[K]) {
+    saveToCassandra[K, X, Y]("localhost", "9160", clusterName, keyspaceName, columnFamily, rowMapper, keySerializer)
+  }
+
+  def saveToCassandra[K, X, Y](clusterName: String,
+                               keyspaceName: String, columnFamily: String)
                               (implicit rowMapper: (T => (K, Map[X, Y])),
                                keySerializer: Serializer[K]) {
-    saveToCassandra[K, X, Y]("localhost", "9160", clusterName, keyspaceName, columnFamily)
+    saveToCassandra[K, X, Y]("localhost", "9160", clusterName, keyspaceName, columnFamily, rowMapper, keySerializer)
   }
 
   def saveToCassandra[K, X, Y](host: String, port: String, clusterName: String,
-                               keyspaceName: String, columnFamily: String)
-                              (implicit rowMapper: (T => (K, Map[X, Y])),
+                               keyspaceName: String, columnFamily: String, rowMapper: (T => (K, Map[X, Y])),
                                keySerializer: Serializer[K]) {
 
     val newRdd = self.map {
