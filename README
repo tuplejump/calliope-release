@@ -1,5 +1,4 @@
-A sample for the Typesafe Stack (http://typesafe.com/stack).
+Calliope
+========
+Calliope is a library providing an interface to consume data from Cassandra to spark and store content from Spark to Cassandra.
 
-Scala sample project using Scala and SBT.
-
-To run and test it use SBT invoke: 'sbt run'
