@@ -6,16 +6,19 @@ import org.apache.hadoop.mapreduce.Job
 import org.apache.cassandra.hadoop.ConfigHelper
 import org.apache.cassandra.thrift.{SliceRange, SlicePredicate}
 import org.slf4j.LoggerFactory
+import org.scalatest.matchers.{MustMatchers, ShouldMatchers}
+import java.nio.ByteBuffer
 
 /**
- * To run this test you need a Cassandra cluter up and running
+ * To run this test you need a Cassandra cluster up and running
  * and update the constants to map to your setup.
  *
  */
-class CassandraRDDSpec extends FunSpec with BeforeAndAfterAll {
+class CassandraRDDSpec extends FunSpec with BeforeAndAfterAll with ShouldMatchers with MustMatchers {
 
   val CASSANDRA_NODE_COUNT = 3
   val CASSANDRA_NODE_LOCATIONS = List("127.0.0.1", "127.0.0.2", "127.0.0.3")
+
 
   info("Describes the functionality provided by the Cassandra RDD")
 
@@ -23,24 +26,12 @@ class CassandraRDDSpec extends FunSpec with BeforeAndAfterAll {
 
   describe("Cassandra RDD") {
     it("should be able to get data partitions") {
+      import com.tuplejump.calliope.RichByteBuffer._
 
-      val job = new Job()
 
+      val cas = CasHelper.thrift.useKeyspace("casDemo").fromColumnFamily("Words")
 
-      ConfigHelper.setInputColumnFamily(job.getConfiguration, "casDemo", "Words")
-
-      val predicate = new SlicePredicate()
-      val sliceRange = new SliceRange()
-      sliceRange.setStart(Array.empty[Byte])
-      sliceRange.setFinish(Array.empty[Byte])
-      predicate.setSlice_range(sliceRange)
-      ConfigHelper.setInputSlicePredicate(job.getConfiguration, predicate)
-
-      ConfigHelper.setInputInitialAddress(job.getConfiguration, "127.0.0.1")
-
-      ConfigHelper.setInputPartitioner(job.getConfiguration(), "Murmur3Partitioner")
-
-      val casrdd = new CassandraRDD[String, String](sc, job.getConfiguration)
+      val casrdd = new CassandraRDD[String, Map[String, String]](sc, cas)
 
       val partitions: Array[Partition] = casrdd.getPartitions
 
@@ -48,10 +39,34 @@ class CassandraRDDSpec extends FunSpec with BeforeAndAfterAll {
     }
 
     it("should be able to give preferred locations for partitions") {
+      import com.tuplejump.calliope.RichByteBuffer._
+
+      val cas = CasHelper.thrift.useKeyspace("casDemo").fromColumnFamily("Words")
+
+      val casrdd = new CassandraRDD[String, Map[String, String]](sc, cas)
+
+      val partitions: Array[Partition] = casrdd.getPartitions
+
+      partitions.map {
+        p => casrdd.getPreferredLocations(p) must not be (null)
+      }
 
     }
 
-    it("should be able to perform compute on partitions")(pending)
+    it("should be able to perform compute on partitions") {
+
+      import com.tuplejump.calliope.RichByteBuffer._
+
+
+      val cas = CasHelper.thrift.useKeyspace("casDemo").fromColumnFamily("Words")
+
+      val casrdd = new CassandraRDD[String, Map[String, String]](sc, cas)
+
+      val result = casrdd.collect().toMap
+
+      println(result)
+
+    }
   }
 
   override def afterAll() {
