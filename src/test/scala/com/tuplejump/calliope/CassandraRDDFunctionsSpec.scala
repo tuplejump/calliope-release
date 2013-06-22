@@ -5,6 +5,7 @@ import org.scalatest.matchers.{MustMatchers, ShouldMatchers}
 import spark.SparkContext
 import java.nio.ByteBuffer
 import java.util.UUID
+import org.apache.cassandra.utils.ByteBufferUtil
 
 class CassandraRDDFunctionsSpec extends FunSpec with BeforeAndAfterAll with ShouldMatchers with MustMatchers {
 
@@ -30,7 +31,14 @@ class CassandraRDDFunctionsSpec extends FunSpec with BeforeAndAfterAll with Shou
       rdd.saveToCassandra(cas)
 
 
+      import RichByteBuffer._
+      val casrdd = new CassandraRDD[String, (String, Int, String, String)](sc, cas)
 
+      val results = casrdd.map {
+        case (k, v) => v
+      }.collect()
+
+      results.contains(("Frodo", 24, "hobbit", "shire")) must be(true)
     }
   }
 
@@ -47,12 +55,17 @@ object Transformers {
     UUID.nameUUIDFromBytes((x._1 + x._2 + x._3 + x._4).getBytes()).toString
   }
 
-  implicit def rddToColumns(x: (String, Int, String, String)): Map[ByteBuffer, ByteBuffer] = {
+  implicit def lordsToColumns(x: (String, Int, String, String)): Map[ByteBuffer, ByteBuffer] = {
     Map[ByteBuffer, ByteBuffer](
       "name" -> x._1,
       "age" -> x._2,
       "tribe" -> x._3,
       "from" -> x._4
     )
+  }
+
+  implicit def columnsToLords(m: Map[ByteBuffer, ByteBuffer]): (String, Int, String, String) = {
+    (m.getOrElse[ByteBuffer]("name", "NO_NAME"), m.getOrElse[ByteBuffer]("age", 0),
+      m.getOrElse[ByteBuffer]("tribe", "NOT KNOWN"), m.getOrElse[ByteBuffer]("from", "a land far far away"))
   }
 }

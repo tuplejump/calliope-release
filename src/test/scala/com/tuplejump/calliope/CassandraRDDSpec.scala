@@ -58,11 +58,9 @@ class CassandraRDDSpec extends FunSpec with BeforeAndAfterAll with ShouldMatcher
 
     it("should be able to perform compute on partitions") {
 
-      import com.tuplejump.calliope.RichByteBuffer._
-
-
       val cas = CasHelper.thrift.useKeyspace(TEST_KEYSPACE).fromColumnFamily(TEST_INPUT_COLUMN_FAMILY)
 
+      import com.tuplejump.calliope.RichByteBuffer._
       val casrdd = new CassandraRDD[String, Map[String, String]](sc, cas)
 
       val result = casrdd.collect().toMap
