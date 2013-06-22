@@ -29,6 +29,8 @@ class CassandraRDDFunctionsSpec extends FunSpec with BeforeAndAfterAll with Shou
 
       rdd.saveToCassandra(cas)
 
+
+
     }
   }
 

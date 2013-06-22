@@ -11,6 +11,7 @@ import com.tuplejump.calliope.RichByteBuffer._
 import java.text.SimpleDateFormat
 import java.util.Date
 
+
 class CassandraRDD[K, V](sc: SparkContext, @transient cas: CasHelper)
                         (implicit keyUnmarshaller: ByteBuffer => K, rowUnmarshaller: Map[ByteBuffer, ByteBuffer] => V)
   extends RDD[(K, V)](sc, Nil)
