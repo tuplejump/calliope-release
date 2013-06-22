@@ -70,35 +70,28 @@ class CasThriftHelper(keyspace: String,
   def getConfiguration = {
     val job = new Job()
 
+    //For Input
     ConfigHelper.setInputColumnFamily(job.getConfiguration, keyspace, columnFamily, hasWideRows)
-
     ConfigHelper.setInputInitialAddress(job.getConfiguration, host)
-
     ConfigHelper.setInputRpcPort(job.getConfiguration, port)
-
     ConfigHelper.setInputPartitioner(job.getConfiguration(), partitioner.toString)
 
+    //For Output
+    ConfigHelper.setOutputColumnFamily(job.getConfiguration, keyspace, columnFamily)
     ConfigHelper.setOutputInitialAddress(job.getConfiguration, host)
-
-    ConfigHelper.setOutputInitialAddress(job.getConfiguration, host)
-
+    ConfigHelper.setOutputRpcPort(job.getConfiguration, port)
     ConfigHelper.setOutputPartitioner(job.getConfiguration(), partitioner.toString)
 
 
-    ConfigHelper.setInputColumnFamily(job.getConfiguration, keyspace, columnFamily)
-
     val predicate = new SlicePredicate()
-
-    val sliceRange = new SliceRange()
-    sliceRange.setStart(colSliceFrom)
-    sliceRange.setFinish(colSliceTo)
-
-
     columns map {
       case colList: List[String] =>
         predicate.setColumn_names(colList.map(col => ByteBufferUtil.bytes(col)))
     }
 
+    val sliceRange = new SliceRange()
+    sliceRange.setStart(colSliceFrom)
+    sliceRange.setFinish(colSliceTo)
     predicate.setSlice_range(sliceRange)
     ConfigHelper.setInputSlicePredicate(job.getConfiguration, predicate)
 

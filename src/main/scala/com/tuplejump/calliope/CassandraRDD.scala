@@ -12,7 +12,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 
 class CassandraRDD[K, V](sc: SparkContext, @transient cas: CasHelper)
-                        (implicit keyMarshaller: ByteBuffer => K, rowMarshaller: Map[ByteBuffer, ByteBuffer] => V)
+                        (implicit keyUnmarshaller: ByteBuffer => K, rowUnmarshaller: Map[ByteBuffer, ByteBuffer] => V)
   extends RDD[(K, V)](sc, Nil)
   with HadoopMapReduceUtil
   with Logging {
@@ -38,9 +38,9 @@ class CassandraRDD[K, V](sc: SparkContext, @transient cas: CasHelper)
 
 
     val reader = format.createRecordReader(
-      split.serializableSplit.value, hadoopAttemptContext)
+      split.inputSplit.value, hadoopAttemptContext)
 
-    reader.initialize(split.serializableSplit.value, hadoopAttemptContext)
+    reader.initialize(split.inputSplit.value, hadoopAttemptContext)
     context.addOnCompleteCallback(() => close())
 
     var havePair = false
@@ -82,20 +82,22 @@ class CassandraRDD[K, V](sc: SparkContext, @transient cas: CasHelper)
     val rawSplits = inputFormat.getSplits(jc).toArray
     val result = new Array[Partition](rawSplits.size)
     for (i <- 0 until rawSplits.size) {
-      result(i) = new CassandraPartition(id, i, rawSplits(i).asInstanceOf[InputSplit with Writable])
+      result(i) = new CassandraPartition(id, i, rawSplits(i).asInstanceOf[InputSplit])
     }
     result
   }
 
   override protected[calliope] def getPreferredLocations(split: Partition): Seq[String] = {
-    split.asInstanceOf[CassandraPartition].rawSplit.getLocations
+    split.asInstanceOf[CassandraPartition].s.getLocations
   }
 }
 
 
-case class CassandraPartition(rddId: Int, val index: Int, @transient rawSplit: InputSplit with Writable) extends Partition {
+case class CassandraPartition(rddId: Int, val idx: Int, @transient s: InputSplit) extends Partition {
 
-  val serializableSplit = new SerializableWritable(rawSplit)
+  val inputSplit = new SerializableWritable(s.asInstanceOf[InputSplit with Writable])
 
-  override def hashCode(): Int = (41 * (41 + rddId) + index)
+  override def hashCode(): Int = (41 * (41 + rddId) + idx)
+
+  override val index: Int = idx
 }

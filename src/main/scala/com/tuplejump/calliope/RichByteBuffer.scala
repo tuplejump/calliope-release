@@ -19,6 +19,10 @@ object RichByteBuffer {
 
   implicit def ByteBuffer2String(buffer: ByteBuffer, charset: Charset): String = ByteBufferUtil.string(buffer, charset)
 
+  implicit def MapBB2MapSS(m: Map[ByteBuffer, ByteBuffer]) = m.map {
+    case (k, v) => new Tuple2[String, String](k, v)
+  }.toMap
+
 
   /* Typed objects to ByteBuffer */
   implicit def String2ByteBuffer(str: String): ByteBuffer = ByteBufferUtil.bytes(str)
@@ -31,9 +35,15 @@ object RichByteBuffer {
 
   implicit def Long2ByteBuffer(l: Long): ByteBuffer = ByteBufferUtil.bytes(l)
 
-  implicit def MapBA2MapSS(m: Map[ByteBuffer, ByteBuffer]) = m.map {
-    case (k, v) => new Tuple2[String, String](k, v)
-  }.toMap
+  implicit def TupleSS2TupleBB(t: (String, String)): (ByteBuffer, ByteBuffer) = (t._1, t._2)
+
+  implicit def TupleSI2TupleBB(t: (String, Int)): (ByteBuffer, ByteBuffer) = (t._1, t._2)
+
+  implicit def TupleSL2TupleBB(t: (String, Long)): (ByteBuffer, ByteBuffer) = (t._1, t._2)
+
+  implicit def TupleSF2TupleBB(t: (String, Float)): (ByteBuffer, ByteBuffer) = (t._1, t._2)
+
+  implicit def TupleSD2TupleBB(t: (String, Double)): (ByteBuffer, ByteBuffer) = (t._1, t._2)
 
 }
 

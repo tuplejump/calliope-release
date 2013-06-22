@@ -11,13 +11,15 @@ import java.nio.ByteBuffer
 
 /**
  * To run this test you need a Cassandra cluster up and running
- * and update the constants to map to your setup.
+ * and run the data-script.cli in it to create the data.
  *
  */
 class CassandraRDDSpec extends FunSpec with BeforeAndAfterAll with ShouldMatchers with MustMatchers {
 
   val CASSANDRA_NODE_COUNT = 3
   val CASSANDRA_NODE_LOCATIONS = List("127.0.0.1", "127.0.0.2", "127.0.0.3")
+  val TEST_KEYSPACE = "casSparkTest"
+  val TEST_INPUT_COLUMN_FAMILY = "Words"
 
 
   info("Describes the functionality provided by the Cassandra RDD")
@@ -25,11 +27,12 @@ class CassandraRDDSpec extends FunSpec with BeforeAndAfterAll with ShouldMatcher
   val sc = new SparkContext("local", "castest")
 
   describe("Cassandra RDD") {
+
     it("should be able to get data partitions") {
       import com.tuplejump.calliope.RichByteBuffer._
 
 
-      val cas = CasHelper.thrift.useKeyspace("casDemo").fromColumnFamily("Words")
+      val cas = CasHelper.thrift.useKeyspace(TEST_KEYSPACE).fromColumnFamily(TEST_INPUT_COLUMN_FAMILY)
 
       val casrdd = new CassandraRDD[String, Map[String, String]](sc, cas)
 
@@ -41,7 +44,7 @@ class CassandraRDDSpec extends FunSpec with BeforeAndAfterAll with ShouldMatcher
     it("should be able to give preferred locations for partitions") {
       import com.tuplejump.calliope.RichByteBuffer._
 
-      val cas = CasHelper.thrift.useKeyspace("casDemo").fromColumnFamily("Words")
+      val cas = CasHelper.thrift.useKeyspace(TEST_KEYSPACE).fromColumnFamily(TEST_INPUT_COLUMN_FAMILY)
 
       val casrdd = new CassandraRDD[String, Map[String, String]](sc, cas)
 
@@ -58,13 +61,15 @@ class CassandraRDDSpec extends FunSpec with BeforeAndAfterAll with ShouldMatcher
       import com.tuplejump.calliope.RichByteBuffer._
 
 
-      val cas = CasHelper.thrift.useKeyspace("casDemo").fromColumnFamily("Words")
+      val cas = CasHelper.thrift.useKeyspace(TEST_KEYSPACE).fromColumnFamily(TEST_INPUT_COLUMN_FAMILY)
 
       val casrdd = new CassandraRDD[String, Map[String, String]](sc, cas)
 
       val result = casrdd.collect().toMap
 
-      println(result)
+      val resultKeys = result.keys
+
+      resultKeys must be(Set("3musk001", "thelostworld001", "3musk003", "3musk002", "thelostworld002"))
 
     }
   }
