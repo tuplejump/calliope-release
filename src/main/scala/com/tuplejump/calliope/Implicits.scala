@@ -1,8 +1,12 @@
 package com.tuplejump.calliope
 
-import spark.RDD
+import spark.{SparkContext, RDD}
+import java.nio.ByteBuffer
 
 object Implicits {
-  implicit def rddToPairRDDFunctions[U](rdd: RDD[U]) =
+  implicit def RddToCassandraRDDFunctions[U](rdd: RDD[U]) =
     new CassandraRDDFunctions[U](rdd)
+
+  implicit def SparkContext2CassandraAwareSparkContext(sc: SparkContext) = new CassandraAwareSparkContext(sc)
 }
+

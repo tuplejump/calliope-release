@@ -32,7 +32,8 @@ class CassandraRDDFunctionsSpec extends FunSpec with BeforeAndAfterAll with Shou
       rdd.saveToCassandra(cas)
 
 
-      val casrdd = new CassandraRDD[String, (String, Int, String, String)](sc, cas)
+      //val casrdd = new CassandraRDD[String, (String, Int, String, String)](sc, cas)
+      val casrdd = sc.cassandra[String, (String, Int, String, String)](cas)
 
       val results = casrdd.map {
         case (k, v) => v

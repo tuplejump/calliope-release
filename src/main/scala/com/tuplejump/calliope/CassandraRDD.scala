@@ -12,8 +12,10 @@ import java.text.SimpleDateFormat
 import java.util.Date
 
 
-class CassandraRDD[K, V](sc: SparkContext, @transient cas: CasBuilder)
-                        (implicit keyUnmarshaller: ByteBuffer => K, rowUnmarshaller: Map[ByteBuffer, ByteBuffer] => V)
+class CassandraRDD[K, V](sc: SparkContext,
+                         @transient cas: CasBuilder,
+                         keyUnmarshaller: ByteBuffer => K,
+                         rowUnmarshaller: Map[ByteBuffer, ByteBuffer] => V)
   extends RDD[(K, V)](sc, Nil)
   with HadoopMapReduceUtil
   with Logging {
@@ -64,7 +66,7 @@ class CassandraRDD[K, V](sc: SparkContext, @transient cas: CasBuilder)
         case (name, column) => column.name() -> column.value()
       }.toMap
 
-      return (reader.getCurrentKey, rowAsMap)
+      return (keyUnmarshaller(reader.getCurrentKey), rowUnmarshaller(rowAsMap))
     }
 
     private def close() {
@@ -101,4 +103,14 @@ case class CassandraPartition(rddId: Int, val idx: Int, @transient s: InputSplit
   override def hashCode(): Int = (41 * (41 + rddId) + idx)
 
   override val index: Int = idx
+}
+
+
+class CassandraAwareSparkContext(self: SparkContext) {
+
+  def cassandra[K, V](cas: CasBuilder)
+                     (implicit keyUnmarshaller: ByteBuffer => K,
+                      rowUnmarshaller: Map[ByteBuffer, ByteBuffer] => V) =
+
+    new CassandraRDD[K, V](self, cas, keyUnmarshaller, rowUnmarshaller)
 }

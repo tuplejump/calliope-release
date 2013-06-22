@@ -10,6 +10,8 @@ import org.scalatest.matchers.{MustMatchers, ShouldMatchers}
 import java.nio.ByteBuffer
 import com.tuplejump.calliope.RichByteBuffer._
 
+import Implicits._
+
 /**
  * To run this test you need a Cassandra cluster up and running
  * and run the data-script.cli in it to create the data.
@@ -31,8 +33,7 @@ class CassandraRDDSpec extends FunSpec with BeforeAndAfterAll with ShouldMatcher
 
     it("should be able to get data partitions") {
       val cas = CasBuilder.thrift.withColumnFamily(TEST_KEYSPACE, TEST_INPUT_COLUMN_FAMILY)
-
-      val casrdd = new CassandraRDD[String, Map[String, String]](sc, cas)
+      val casrdd = sc.cassandra[String, Map[String, String]](cas)
 
       val partitions: Array[Partition] = casrdd.getPartitions
 
@@ -42,7 +43,7 @@ class CassandraRDDSpec extends FunSpec with BeforeAndAfterAll with ShouldMatcher
     it("should be able to give preferred locations for partitions") {
       val cas = CasBuilder.thrift.withColumnFamily(TEST_KEYSPACE, TEST_INPUT_COLUMN_FAMILY)
 
-      val casrdd = new CassandraRDD[String, Map[String, String]](sc, cas)
+      val casrdd = sc.cassandra[String, Map[String, String]](cas)
 
       val partitions: Array[Partition] = casrdd.getPartitions
 
@@ -55,7 +56,8 @@ class CassandraRDDSpec extends FunSpec with BeforeAndAfterAll with ShouldMatcher
     it("should be able to perform compute on partitions") {
       val cas = CasBuilder.thrift.withColumnFamily(TEST_KEYSPACE, TEST_INPUT_COLUMN_FAMILY)
 
-      val casrdd = new CassandraRDD[String, Map[String, String]](sc, cas)
+      //val casrdd = new CassandraRDD[String, Map[String, String]](sc, cas)
+      val casrdd = sc.cassandra[String, Map[String, String]](cas)
 
       val result = casrdd.collect().toMap
 
