@@ -6,6 +6,9 @@ import spark.SparkContext
 import java.nio.ByteBuffer
 import java.util.UUID
 import org.apache.cassandra.utils.ByteBufferUtil
+import RichByteBuffer._
+import com.tuplejump.calliope.Implicits._
+import Transformers._
 
 class CassandraRDDFunctionsSpec extends FunSpec with BeforeAndAfterAll with ShouldMatchers with MustMatchers {
 
@@ -24,14 +27,11 @@ class CassandraRDDFunctionsSpec extends FunSpec with BeforeAndAfterAll with Shou
 
       val rdd = sc.parallelize(data)
 
-      import com.tuplejump.calliope.Implicits._
-      import Transformers._
-      val cas = CasHelper.thrift.useKeyspace(TEST_KEYSPACE).fromColumnFamily(TEST_OUTPUT_COLUMN_FAMILY)
+      val cas = CasBuilder.thrift.withColumnFamily(TEST_KEYSPACE, TEST_OUTPUT_COLUMN_FAMILY)
 
       rdd.saveToCassandra(cas)
 
 
-      import RichByteBuffer._
       val casrdd = new CassandraRDD[String, (String, Int, String, String)](sc, cas)
 
       val results = casrdd.map {
@@ -65,7 +65,9 @@ object Transformers {
   }
 
   implicit def columnsToLords(m: Map[ByteBuffer, ByteBuffer]): (String, Int, String, String) = {
-    (m.getOrElse[ByteBuffer]("name", "NO_NAME"), m.getOrElse[ByteBuffer]("age", 0),
-      m.getOrElse[ByteBuffer]("tribe", "NOT KNOWN"), m.getOrElse[ByteBuffer]("from", "a land far far away"))
+    (m.getOrElse[ByteBuffer]("name", "NO_NAME"),
+      m.getOrElse[ByteBuffer]("age", 0),
+      m.getOrElse[ByteBuffer]("tribe", "NOT KNOWN"),
+      m.getOrElse[ByteBuffer]("from", "a land far far away"))
   }
 }

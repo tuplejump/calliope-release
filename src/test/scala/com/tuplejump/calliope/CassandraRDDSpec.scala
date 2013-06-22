@@ -8,6 +8,7 @@ import org.apache.cassandra.thrift.{SliceRange, SlicePredicate}
 import org.slf4j.LoggerFactory
 import org.scalatest.matchers.{MustMatchers, ShouldMatchers}
 import java.nio.ByteBuffer
+import com.tuplejump.calliope.RichByteBuffer._
 
 /**
  * To run this test you need a Cassandra cluster up and running
@@ -29,10 +30,7 @@ class CassandraRDDSpec extends FunSpec with BeforeAndAfterAll with ShouldMatcher
   describe("Cassandra RDD") {
 
     it("should be able to get data partitions") {
-      import com.tuplejump.calliope.RichByteBuffer._
-
-
-      val cas = CasHelper.thrift.useKeyspace(TEST_KEYSPACE).fromColumnFamily(TEST_INPUT_COLUMN_FAMILY)
+      val cas = CasBuilder.thrift.withColumnFamily(TEST_KEYSPACE, TEST_INPUT_COLUMN_FAMILY)
 
       val casrdd = new CassandraRDD[String, Map[String, String]](sc, cas)
 
@@ -42,9 +40,7 @@ class CassandraRDDSpec extends FunSpec with BeforeAndAfterAll with ShouldMatcher
     }
 
     it("should be able to give preferred locations for partitions") {
-      import com.tuplejump.calliope.RichByteBuffer._
-
-      val cas = CasHelper.thrift.useKeyspace(TEST_KEYSPACE).fromColumnFamily(TEST_INPUT_COLUMN_FAMILY)
+      val cas = CasBuilder.thrift.withColumnFamily(TEST_KEYSPACE, TEST_INPUT_COLUMN_FAMILY)
 
       val casrdd = new CassandraRDD[String, Map[String, String]](sc, cas)
 
@@ -57,10 +53,8 @@ class CassandraRDDSpec extends FunSpec with BeforeAndAfterAll with ShouldMatcher
     }
 
     it("should be able to perform compute on partitions") {
+      val cas = CasBuilder.thrift.withColumnFamily(TEST_KEYSPACE, TEST_INPUT_COLUMN_FAMILY)
 
-      val cas = CasHelper.thrift.useKeyspace(TEST_KEYSPACE).fromColumnFamily(TEST_INPUT_COLUMN_FAMILY)
-
-      import com.tuplejump.calliope.RichByteBuffer._
       val casrdd = new CassandraRDD[String, Map[String, String]](sc, cas)
 
       val result = casrdd.collect().toMap

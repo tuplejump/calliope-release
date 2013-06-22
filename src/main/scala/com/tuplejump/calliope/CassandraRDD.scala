@@ -12,14 +12,14 @@ import java.text.SimpleDateFormat
 import java.util.Date
 
 
-class CassandraRDD[K, V](sc: SparkContext, @transient cas: CasHelper)
+class CassandraRDD[K, V](sc: SparkContext, @transient cas: CasBuilder)
                         (implicit keyUnmarshaller: ByteBuffer => K, rowUnmarshaller: Map[ByteBuffer, ByteBuffer] => V)
   extends RDD[(K, V)](sc, Nil)
   with HadoopMapReduceUtil
   with Logging {
 
   // A Hadoop Configuration can be about 10 KB, which is pretty big, so broadcast it
-  @transient private val conf = cas.getConfiguration
+  @transient private val conf = cas.configuration
   private val confBroadcast = sc.broadcast(new SerializableWritable(conf))
 
   @transient val jobId = new JobID(System.currentTimeMillis().toString, id)
