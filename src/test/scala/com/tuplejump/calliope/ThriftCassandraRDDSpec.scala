@@ -85,11 +85,15 @@ class ThriftCassandraRDDSpec extends FunSpec with BeforeAndAfterAll with ShouldM
   }
 }
 
-object CRDDTransformers {
+private object ThriftCRDDTransformers {
 
   import RichByteBuffer._
 
   implicit def row2String(key: ByteBuffer, row: Map[ByteBuffer, ByteBuffer]): List[String] = {
     row.keys.toList
+  }
+
+  implicit def cql3Row2Mapss(keys: Map[String, ByteBuffer], values: Map[String, ByteBuffer]): (Map[String, String], Map[String, String]) = {
+    (keys, values)
   }
 }

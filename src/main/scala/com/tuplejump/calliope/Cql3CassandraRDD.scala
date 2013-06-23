@@ -2,17 +2,16 @@ package com.tuplejump.calliope
 
 import spark._
 import org.apache.hadoop.mapreduce.{TaskAttemptID, JobID, HadoopMapReduceUtil, InputSplit}
-import org.apache.hadoop.io.Writable
-import com.tuplejump.calliope.hadoop.ColumnFamilyInputFormat
 import java.nio.ByteBuffer
 import scala.collection.JavaConversions._
 import java.text.SimpleDateFormat
 import java.util.Date
+import com.tuplejump.calliope.hadoop.cql3.CqlPagingInputFormat
 
 
-class ThriftCassandraRDD[T: Manifest](sc: SparkContext,
-                                      @transient cas: ThriftCasBuilder,
-                                      unmarshaller: (ByteBuffer, Map[ByteBuffer, ByteBuffer]) => T)
+class Cql3CassandraRDD[T: Manifest](sc: SparkContext,
+                                    @transient cas: CasBuilder,
+                                    unmarshaller: (Map[String, ByteBuffer], Map[String, ByteBuffer]) => T)
   extends RDD[T](sc, Nil)
   with HadoopMapReduceUtil
   with Logging {
@@ -30,7 +29,7 @@ class ThriftCassandraRDD[T: Manifest](sc: SparkContext,
 
   def compute(theSplit: Partition, context: TaskContext): Iterator[T] = new Iterator[T] {
     val conf = confBroadcast.value.value
-    val format = new ColumnFamilyInputFormat
+    val format = new CqlPagingInputFormat
     val split = theSplit.asInstanceOf[CassandraPartition]
     //Set configuration
     val attemptId = new TaskAttemptID(jobtrackerId, id, true, split.index, 0)
@@ -59,12 +58,8 @@ class ThriftCassandraRDD[T: Manifest](sc: SparkContext,
         throw new java.util.NoSuchElementException("End of stream")
       }
       havePair = false
-      val rowAsMap = reader.getCurrentValue.map {
-        case (name, column) => column.name() -> column.value()
-      }.toMap
 
-      unmarshaller(reader.getCurrentKey, rowAsMap)
-      //return (keyUnmarshaller(reader.getCurrentKey), rowUnmarshaller(rowAsMap))
+      unmarshaller(reader.getCurrentKey.toMap, reader.getCurrentValue.toMap)
     }
 
     private def close() {
@@ -79,7 +74,7 @@ class ThriftCassandraRDD[T: Manifest](sc: SparkContext,
   def getPartitions: Array[Partition] = {
 
     val jc = newJobContext(conf, jobId)
-    val inputFormat = new ColumnFamilyInputFormat()
+    val inputFormat = new CqlPagingInputFormat
     val rawSplits = inputFormat.getSplits(jc).toArray
     val result = new Array[Partition](rawSplits.size)
     for (i <- 0 until rawSplits.size) {
@@ -93,46 +88,47 @@ class ThriftCassandraRDD[T: Manifest](sc: SparkContext,
   }
 }
 
-class ThriftCassandraSparkContext(self: SparkContext) {
 
-  def thriftCassandra[T](keyspace: String, columnFamily: String)
-                        (implicit unmarshaller: (ByteBuffer, Map[ByteBuffer, ByteBuffer]) => T,
-                         tm: Manifest[T]) = {
-    val cas = CasBuilder.thrift.withColumnFamily(keyspace, columnFamily)
-    this.thriftCassandra[T](cas)
+class Cql3CassandraSparkContext(self: SparkContext) {
+
+  def cql3Cassandra[T](keyspace: String, columnFamily: String)
+                      (implicit unmarshaller: (Map[String, ByteBuffer], Map[String, ByteBuffer]) => T,
+                       tm: Manifest[T]) = {
+    val cas = CasBuilder.cql3.withColumnFamily(keyspace, columnFamily)
+    this.cql3Cassandra[T](cas)
   }
 
-  def thriftCassandra[K, V](keyspace: String, columnFamily: String)
-                           (implicit keyUnmarshaller: ByteBuffer => K,
-                            rowUnmarshaller: Map[ByteBuffer, ByteBuffer] => V,
-                            km: Manifest[K], kv: Manifest[V]) = {
-    val cas = CasBuilder.thrift.withColumnFamily(keyspace, columnFamily)
-    this.thriftCassandra[K, V](cas)
+  def cql3Cassandra[K, V](keyspace: String, columnFamily: String)
+                         (implicit keyUnmarshaller: Map[String, ByteBuffer] => K,
+                          rowUnmarshaller: Map[String, ByteBuffer] => V,
+                          km: Manifest[K], kv: Manifest[V]) = {
+    val cas = CasBuilder.cql3.withColumnFamily(keyspace, columnFamily)
+    this.cql3Cassandra[K, V](cas)
   }
 
-  def thriftCassandra[T](cas: ThriftCasBuilder)
-                        (implicit unmarshaller: (ByteBuffer, Map[ByteBuffer, ByteBuffer]) => T,
-                         tm: Manifest[T]) = {
-    new ThriftCassandraRDD[T](self, cas, unmarshaller)
+  def cql3Cassandra[T](cas: CasBuilder)
+                      (implicit unmarshaller: (Map[String, ByteBuffer], Map[String, ByteBuffer]) => T,
+                       tm: Manifest[T]) = {
+    new Cql3CassandraRDD[T](self, cas, unmarshaller)
   }
 
-  def thriftCassandra[K, V](cas: ThriftCasBuilder)
-                           (implicit keyUnmarshaller: ByteBuffer => K,
-                            rowUnmarshaller: Map[ByteBuffer, ByteBuffer] => V,
-                            km: Manifest[K], kv: Manifest[V]) = {
+  def cql3Cassandra[K, V](cas: CasBuilder)
+                         (implicit keyUnmarshaller: Map[String, ByteBuffer] => K,
+                          rowUnmarshaller: Map[String, ByteBuffer] => V,
+                          km: Manifest[K], kv: Manifest[V]) = {
 
-    implicit def xmer = CasHelper.kvTransformer(keyUnmarshaller, rowUnmarshaller)
-    this.thriftCassandra[(K, V)](cas)
+    implicit def xmer = Cql3CasHelper.kvTransformer(keyUnmarshaller, rowUnmarshaller)
+    this.cql3Cassandra[(K, V)](cas)
   }
 
 
 }
 
-private object CasHelper {
-  def kvTransformer[K, V](keyUnmarshaller: ByteBuffer => K,
-                          rowUnmarshaller: Map[ByteBuffer, ByteBuffer] => V) = {
+private object Cql3CasHelper {
+  def kvTransformer[K, V](keyUnmarshaller: Map[String, ByteBuffer] => K,
+                          rowUnmarshaller: Map[String, ByteBuffer] => V) = {
     {
-      (k: ByteBuffer, v: Map[ByteBuffer, ByteBuffer]) => {
+      (k: Map[String, ByteBuffer], v: Map[String, ByteBuffer]) => {
         (keyUnmarshaller(k), rowUnmarshaller(v))
       }
     }

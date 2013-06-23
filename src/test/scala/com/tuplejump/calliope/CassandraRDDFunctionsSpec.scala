@@ -46,7 +46,7 @@ class CassandraRDDFunctionsSpec extends FunSpec with BeforeAndAfterAll with Shou
   }
 }
 
-object CRDDFuncTransformers {
+private object CRDDFuncTransformers {
 
   import RichByteBuffer._
 
