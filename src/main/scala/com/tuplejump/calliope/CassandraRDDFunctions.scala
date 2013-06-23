@@ -14,7 +14,7 @@ class CassandraRDDFunctions[U](self: RDD[U])
 
   val INPUT_KEYSPACE_CONFIG: String = "cassandra.input.keyspace"
 
-  def saveToCassandra(cas: CasThriftBuilder)
+  def thriftSaveToCassandra(cas: CasThriftBuilder)
                      (implicit keyMarshaller: U => ByteBuffer, rowMarshaller: U => Map[ByteBuffer, ByteBuffer],
                       um: ClassManifest[U]) {
 

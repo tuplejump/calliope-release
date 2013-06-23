@@ -1,11 +1,7 @@
 package com.tuplejump.calliope
 
-import org.scalatest.{BeforeAndAfterAll, BeforeAndAfter, FunSpec}
+import org.scalatest.{BeforeAndAfterAll, FunSpec}
 import spark.{Partition, SparkContext}
-import org.apache.hadoop.mapreduce.Job
-import org.apache.cassandra.hadoop.ConfigHelper
-import org.apache.cassandra.thrift.{SliceRange, SlicePredicate}
-import org.slf4j.LoggerFactory
 import org.scalatest.matchers.{MustMatchers, ShouldMatchers}
 import java.nio.ByteBuffer
 import com.tuplejump.calliope.RichByteBuffer._
@@ -17,7 +13,7 @@ import Implicits._
  * and run the data-script.cli in it to create the data.
  *
  */
-class CassandraRDDSpec extends FunSpec with BeforeAndAfterAll with ShouldMatchers with MustMatchers {
+class ThriftCassandraRDDSpec extends FunSpec with BeforeAndAfterAll with ShouldMatchers with MustMatchers {
 
   val CASSANDRA_NODE_COUNT = 3
   val CASSANDRA_NODE_LOCATIONS = List("127.0.0.1", "127.0.0.2", "127.0.0.3")
@@ -33,7 +29,7 @@ class CassandraRDDSpec extends FunSpec with BeforeAndAfterAll with ShouldMatcher
 
     it("should be able to get data partitions") {
       val cas = CasBuilder.thrift.withColumnFamily(TEST_KEYSPACE, TEST_INPUT_COLUMN_FAMILY)
-      val casrdd = sc.cassandra[String, Map[String, String]](cas)
+      val casrdd = sc.thriftCassandra[String, Map[String, String]](cas)
 
       val partitions: Array[Partition] = casrdd.getPartitions
 
@@ -43,7 +39,7 @@ class CassandraRDDSpec extends FunSpec with BeforeAndAfterAll with ShouldMatcher
     it("should be able to give preferred locations for partitions") {
       val cas = CasBuilder.thrift.withColumnFamily(TEST_KEYSPACE, TEST_INPUT_COLUMN_FAMILY)
 
-      val casrdd = sc.cassandra[String, Map[String, String]](cas)
+      val casrdd = sc.thriftCassandra[String, Map[String, String]](cas)
 
       val partitions: Array[Partition] = casrdd.getPartitions
 
@@ -56,7 +52,7 @@ class CassandraRDDSpec extends FunSpec with BeforeAndAfterAll with ShouldMatcher
     it("should be able to build and process RDD[K,V]") {
       val cas = CasBuilder.thrift.withColumnFamily(TEST_KEYSPACE, TEST_INPUT_COLUMN_FAMILY)
 
-      val casrdd = sc.cassandra[String, Map[String, String]](cas)
+      val casrdd = sc.thriftCassandra[String, Map[String, String]](cas)
       //This is same as calling,
       //val casrdd = sc.cassandra[String, Map[String, String]](TEST_KEYSPACE, TEST_INPUT_COLUMN_FAMILY)
 

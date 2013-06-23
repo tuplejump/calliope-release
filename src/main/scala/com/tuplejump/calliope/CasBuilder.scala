@@ -1,6 +1,6 @@
 package com.tuplejump.calliope
 
-import org.apache.cassandra.hadoop.ConfigHelper
+import com.tuplejump.calliope.hadoop.ConfigHelper
 import org.apache.cassandra.thrift.{SliceRange, SlicePredicate}
 import spark.Partition
 import org.apache.hadoop.mapreduce.Job

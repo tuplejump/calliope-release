@@ -10,7 +10,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 
 
-class CassandraRDD[T: Manifest](sc: SparkContext,
+class ThriftCassandraRDD[T: Manifest](sc: SparkContext,
                                 @transient cas: CasBuilder,
                                 marshaller: (ByteBuffer, Map[ByteBuffer, ByteBuffer]) => T)
   extends RDD[T](sc, Nil)
@@ -104,36 +104,36 @@ case class CassandraPartition(rddId: Int, val idx: Int, @transient s: InputSplit
 }
 
 
-class CassandraAwareSparkContext(self: SparkContext) {
+class ThriftCassandraAwareSparkContext(self: SparkContext) {
 
-  def cassandra[T](keyspace: String, columnFamily: String)
+  def thriftCassandra[T](keyspace: String, columnFamily: String)
                   (implicit unmarshaller: (ByteBuffer, Map[ByteBuffer, ByteBuffer]) => T,
                    tm: Manifest[T]) = {
     val cas = CasBuilder.thrift.withColumnFamily(keyspace, columnFamily)
-    this.cassandra[T](cas)
+    this.thriftCassandra[T](cas)
   }
 
-  def cassandra[K, V](keyspace: String, columnFamily: String)
+  def thriftCassandra[K, V](keyspace: String, columnFamily: String)
                      (implicit keyUnmarshaller: ByteBuffer => K,
                       rowUnmarshaller: Map[ByteBuffer, ByteBuffer] => V,
                       km: Manifest[K], kv: Manifest[V]) = {
     val cas = CasBuilder.thrift.withColumnFamily(keyspace, columnFamily)
-    this.cassandra[K, V](cas)
+    this.thriftCassandra[K, V](cas)
   }
 
-  def cassandra[T](cas: CasBuilder)
+  def thriftCassandra[T](cas: CasBuilder)
                   (implicit unmarshaller: (ByteBuffer, Map[ByteBuffer, ByteBuffer]) => T,
                    tm: Manifest[T]) = {
-    new CassandraRDD[T](self, cas, unmarshaller)
+    new ThriftCassandraRDD[T](self, cas, unmarshaller)
   }
 
-  def cassandra[K, V](cas: CasBuilder)
+  def thriftCassandra[K, V](cas: CasBuilder)
                      (implicit keyUnmarshaller: ByteBuffer => K,
                       rowUnmarshaller: Map[ByteBuffer, ByteBuffer] => V,
                       km: Manifest[K], kv: Manifest[V]) = {
 
     implicit def xmer = CasHelper.kvTransformer(keyUnmarshaller, rowUnmarshaller)
-    this.cassandra[(K, V)](cas)
+    this.thriftCassandra[(K, V)](cas)
   }
 
 

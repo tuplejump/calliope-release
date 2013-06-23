@@ -29,9 +29,9 @@ class CassandraRDDFunctionsSpec extends FunSpec with BeforeAndAfterAll with Shou
 
       val cas = CasBuilder.thrift.withColumnFamily(TEST_KEYSPACE, TEST_OUTPUT_COLUMN_FAMILY)
 
-      rdd.saveToCassandra(cas)
+      rdd.thriftSaveToCassandra(cas)
 
-      val casrdd = sc.cassandra[String, (String, Int, String, String)](cas)
+      val casrdd = sc.thriftCassandra[String, (String, Int, String, String)](cas)
 
       val results = casrdd.map {
         case (k, v) => v
