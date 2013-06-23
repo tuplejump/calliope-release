@@ -16,6 +16,7 @@ object CalliopeBuild extends Build {
       "org.apache.cassandra" % "cassandra-all" % CAS_VERSION intransitive(),
       "org.apache.cassandra" % "cassandra-thrift" % CAS_VERSION intransitive(),
       "org.apache.thrift" % "libthrift" % THRIFT_VERSION exclude("org.slf4j", "slf4j-api") exclude("javax.servlet", "servlet-api"),
+      "org.slf4j" % "slf4j-jdk14" % "1.7.5",
       "org.scalatest" %% "scalatest" % "1.9.1" % "test"
     )
 

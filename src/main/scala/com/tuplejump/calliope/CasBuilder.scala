@@ -23,18 +23,18 @@ class BaseCasBuilder {
 }
 
 class CasThriftBuilder(keyspace: String,
-                      columnFamily: String,
-                      hasWideRows: Boolean = false,
-                      host: String = "localhost",
-                      port: String = "9160",
-                      partitioner: CasPartitioners.Value = CasPartitioners.Murmur3Partitioner,
-                      columns: Option[List[String]] = None,
-                      username: Option[String] = None,
-                      password: Option[String] = None,
-                      query: Option[FinalQuery] = None,
-                      colSliceFrom: Array[Byte] = Array.empty[Byte],
-                      colSliceTo: Array[Byte] = Array.empty[Byte]
-                       ) extends CasBuilder {
+                       columnFamily: String,
+                       hasWideRows: Boolean = false,
+                       host: String = "localhost",
+                       port: String = "9160",
+                       partitioner: CasPartitioners.Value = CasPartitioners.Murmur3Partitioner,
+                       columns: Option[List[String]] = None,
+                       username: Option[String] = None,
+                       password: Option[String] = None,
+                       query: Option[FinalQuery] = None,
+                       colSliceFrom: Array[Byte] = Array.empty[Byte],
+                       colSliceTo: Array[Byte] = Array.empty[Byte]
+                        ) extends CasBuilder {
 
   def onHost(h: String) = new CasThriftBuilder(
     keyspace, columnFamily, hasWideRows, h, port, partitioner, columns, username, password, query, colSliceFrom, colSliceTo)
@@ -50,6 +50,9 @@ class CasThriftBuilder(keyspace: String,
 
   def columns(c: String*) = new CasThriftBuilder(
     keyspace, columnFamily, hasWideRows, host, port, partitioner, Some(c.toList), username, password, query, colSliceFrom, colSliceTo)
+
+  def forWideRows(hwr: Boolean) = new CasThriftBuilder(
+    keyspace, columnFamily, hwr, host, port, partitioner, columns, username, password, query, colSliceFrom, colSliceTo)
 
   def columnsInRange(start: Array[Byte], finish: Array[Byte]) = new CasThriftBuilder(
     keyspace, columnFamily, hasWideRows, host, port, partitioner, columns, username, password, query, start, finish)
@@ -67,6 +70,7 @@ class CasThriftBuilder(keyspace: String,
     val job = new Job()
 
     //For Input
+
     ConfigHelper.setInputColumnFamily(job.getConfiguration, keyspace, columnFamily, hasWideRows)
     ConfigHelper.setInputInitialAddress(job.getConfiguration, host)
     ConfigHelper.setInputRpcPort(job.getConfiguration, port)

@@ -8,7 +8,7 @@ import java.util.UUID
 import org.apache.cassandra.utils.ByteBufferUtil
 import RichByteBuffer._
 import com.tuplejump.calliope.Implicits._
-import Transformers._
+import CRDDFuncTransformers._
 
 class CassandraRDDFunctionsSpec extends FunSpec with BeforeAndAfterAll with ShouldMatchers with MustMatchers {
 
@@ -31,8 +31,6 @@ class CassandraRDDFunctionsSpec extends FunSpec with BeforeAndAfterAll with Shou
 
       rdd.saveToCassandra(cas)
 
-
-      //val casrdd = new CassandraRDD[String, (String, Int, String, String)](sc, cas)
       val casrdd = sc.cassandra[String, (String, Int, String, String)](cas)
 
       val results = casrdd.map {
@@ -48,7 +46,7 @@ class CassandraRDDFunctionsSpec extends FunSpec with BeforeAndAfterAll with Shou
   }
 }
 
-object Transformers {
+object CRDDFuncTransformers {
 
   import RichByteBuffer._
 

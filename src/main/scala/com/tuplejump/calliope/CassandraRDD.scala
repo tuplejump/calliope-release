@@ -12,11 +12,10 @@ import java.text.SimpleDateFormat
 import java.util.Date
 
 
-class CassandraRDD[K, V](sc: SparkContext,
-                         @transient cas: CasBuilder,
-                         keyUnmarshaller: ByteBuffer => K,
-                         rowUnmarshaller: Map[ByteBuffer, ByteBuffer] => V)
-  extends RDD[(K, V)](sc, Nil)
+class CassandraRDD[T: Manifest](sc: SparkContext,
+                                @transient cas: CasBuilder,
+                                marshaller: (ByteBuffer, Map[ByteBuffer, ByteBuffer]) => T)
+  extends RDD[T](sc, Nil)
   with HadoopMapReduceUtil
   with Logging {
 
@@ -31,7 +30,7 @@ class CassandraRDD[K, V](sc: SparkContext,
     formatter.format(new Date())
   }
 
-  def compute(theSplit: Partition, context: TaskContext): Iterator[(K, V)] = new Iterator[(K, V)] {
+  def compute(theSplit: Partition, context: TaskContext): Iterator[T] = new Iterator[T] {
     val conf = confBroadcast.value.value
     val format = new ColumnFamilyInputFormat
     val split = theSplit.asInstanceOf[CassandraPartition]
@@ -57,7 +56,7 @@ class CassandraRDD[K, V](sc: SparkContext,
       !finished
     }
 
-    override def next: (K, V) = {
+    override def next: T = {
       if (!hasNext) {
         throw new java.util.NoSuchElementException("End of stream")
       }
@@ -66,7 +65,8 @@ class CassandraRDD[K, V](sc: SparkContext,
         case (name, column) => column.name() -> column.value()
       }.toMap
 
-      return (keyUnmarshaller(reader.getCurrentKey), rowUnmarshaller(rowAsMap))
+      return marshaller(reader.getCurrentKey, rowAsMap)
+      //return (keyUnmarshaller(reader.getCurrentKey), rowUnmarshaller(rowAsMap))
     }
 
     private def close() {
@@ -108,9 +108,46 @@ case class CassandraPartition(rddId: Int, val idx: Int, @transient s: InputSplit
 
 class CassandraAwareSparkContext(self: SparkContext) {
 
+  def cassandra[T](keyspace: String, columnFamily: String)
+                  (implicit unmarshaller: (ByteBuffer, Map[ByteBuffer, ByteBuffer]) => T,
+                   tm: Manifest[T]) = {
+    val cas = CasBuilder.thrift.withColumnFamily(keyspace, columnFamily)
+    this.cassandra[T](cas)
+  }
+
+  def cassandra[K, V](keyspace: String, columnFamily: String)
+                     (implicit keyUnmarshaller: ByteBuffer => K,
+                      rowUnmarshaller: Map[ByteBuffer, ByteBuffer] => V,
+                      km: Manifest[K], kv: Manifest[V]) = {
+    val cas = CasBuilder.thrift.withColumnFamily(keyspace, columnFamily)
+    this.cassandra[K, V](cas)
+  }
+
+  def cassandra[T](cas: CasBuilder)
+                  (implicit unmarshaller: (ByteBuffer, Map[ByteBuffer, ByteBuffer]) => T,
+                   tm: Manifest[T]) = {
+    new CassandraRDD[T](self, cas, unmarshaller)
+  }
+
   def cassandra[K, V](cas: CasBuilder)
                      (implicit keyUnmarshaller: ByteBuffer => K,
-                      rowUnmarshaller: Map[ByteBuffer, ByteBuffer] => V) =
+                      rowUnmarshaller: Map[ByteBuffer, ByteBuffer] => V,
+                      km: Manifest[K], kv: Manifest[V]) = {
 
-    new CassandraRDD[K, V](self, cas, keyUnmarshaller, rowUnmarshaller)
+    implicit def xmer = CasHelper.kvTransformer(keyUnmarshaller, rowUnmarshaller)
+    this.cassandra[(K, V)](cas)
+  }
+
+
+}
+
+object CasHelper {
+  def kvTransformer[K, V](keyUnmarshaller: ByteBuffer => K,
+                          rowUnmarshaller: Map[ByteBuffer, ByteBuffer] => V) = {
+    {
+      (k: ByteBuffer, v: Map[ByteBuffer, ByteBuffer]) => {
+        (keyUnmarshaller(k), rowUnmarshaller(v))
+      }
+    }
+  }
 }

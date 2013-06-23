@@ -53,11 +53,12 @@ class CassandraRDDSpec extends FunSpec with BeforeAndAfterAll with ShouldMatcher
 
     }
 
-    it("should be able to perform compute on partitions") {
+    it("should be able to build and process RDD[K,V]") {
       val cas = CasBuilder.thrift.withColumnFamily(TEST_KEYSPACE, TEST_INPUT_COLUMN_FAMILY)
 
-      //val casrdd = new CassandraRDD[String, Map[String, String]](sc, cas)
       val casrdd = sc.cassandra[String, Map[String, String]](cas)
+      //This is same as calling,
+      //val casrdd = sc.cassandra[String, Map[String, String]](TEST_KEYSPACE, TEST_INPUT_COLUMN_FAMILY)
 
       val result = casrdd.collect().toMap
 
@@ -66,9 +67,33 @@ class CassandraRDDSpec extends FunSpec with BeforeAndAfterAll with ShouldMatcher
       resultKeys must be(Set("3musk001", "thelostworld001", "3musk003", "3musk002", "thelostworld002"))
 
     }
+
+    //TODO: Add wide row support test case
+    /* it("should be able to build and process RDD[U]") {
+      val cas = CasBuilder.thrift.withColumnFamily("caswidetest", "clicks")
+
+      import CRDDTransformers._
+      //val casrdd = new CassandraRDD[String, Map[String, String]](sc, cas)
+      //val newcas = CasBuilder.thrift.withColumnFamily("rohit_tuplejumpcom_newapp002", "endpoint0001").forWideRows(true)
+      val casrdd = sc.cassandra[List[String]](cas)
+
+      val result = casrdd.collect().toList
+
+      println(result)
+    }  */
+
   }
 
   override def afterAll() {
     sc.stop()
+  }
+}
+
+object CRDDTransformers {
+
+  import RichByteBuffer._
+
+  implicit def row2String(key: ByteBuffer, row: Map[ByteBuffer, ByteBuffer]): List[String] = {
+    row.keys.toList
   }
 }
