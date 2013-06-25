@@ -7,6 +7,8 @@ object Implicits {
   implicit def RddToCassandraRDDFunctions[U](rdd: RDD[U]) =
     new CassandraRDDFunctions[U](rdd)
 
-  implicit def SparkContext2CassandraAwareSparkContext(sc: SparkContext) = new CassandraAwareSparkContext(sc)
+  implicit def SparkContext2ThriftCasSparkContext(sc: SparkContext) = new ThriftCassandraSparkContext(sc)
+
+  implicit def SparkContext2Cql3CasSparkContext(sc: SparkContext) = new Cql3CassandraSparkContext(sc)
 }
 

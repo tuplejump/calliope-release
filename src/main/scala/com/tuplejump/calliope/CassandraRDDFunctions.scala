@@ -6,18 +6,19 @@ import java.nio.ByteBuffer
 import org.apache.cassandra.thrift.{Column, Mutation, ColumnOrSuperColumn}
 import org.apache.cassandra.hadoop.ColumnFamilyOutputFormat
 import scala.collection.JavaConversions._
-import scala.collection.JavaConverters._
 
 import spark.SparkContext._
+import org.apache.cassandra.hadoop.cql3.CqlOutputFormat
 
 class CassandraRDDFunctions[U](self: RDD[U])
   extends Logging with HadoopMapReduceUtil with Serializable {
 
-  val INPUT_KEYSPACE_CONFIG: String = "cassandra.input.keyspace"
+  private final val OUTPUT_KEYSPACE_CONFIG: String = "cassandra.output.keyspace"
+  private final val OUTPUT_CQL: String = "cassandra.output.cql"
 
-  def saveToCassandra(cas: CasThriftBuilder)
-                     (implicit keyMarshaller: U => ByteBuffer, rowMarshaller: U => Map[ByteBuffer, ByteBuffer],
-                      um: ClassManifest[U]) {
+  def thriftSaveToCassandra(cas: ThriftCasBuilder)
+                           (implicit keyMarshaller: U => ByteBuffer, rowMarshaller: U => Map[ByteBuffer, ByteBuffer],
+                            um: ClassManifest[U]) {
 
 
     val conf = cas.configuration
@@ -27,7 +28,7 @@ class CassandraRDDFunctions[U](self: RDD[U])
       case x: U =>
         (x, mapToMutations(x))
     }.saveAsNewAPIHadoopFile(
-      conf.get(INPUT_KEYSPACE_CONFIG),
+      conf.get(OUTPUT_KEYSPACE_CONFIG),
       classOf[ByteBuffer],
       classOf[List[Mutation]],
       classOf[ColumnFamilyOutputFormat],
@@ -46,4 +47,28 @@ class CassandraRDDFunctions[U](self: RDD[U])
       }.toList
     }
   }
+
+  def cql3SaveToCassandra(cas: Cql3CasBuilder)
+                         (implicit keyMarshaller: U => Map[String, ByteBuffer], rowMarshaller: U => List[ByteBuffer],
+                          um: ClassManifest[U]) {
+    val conf = cas.configuration
+
+    require(conf.get(OUTPUT_CQL) != null && !conf.get(OUTPUT_CQL).isEmpty,
+      "Query to save the records to cassandra must be set using saveWithQuery on cas")
+
+    import scala.collection.JavaConversions._
+    import scala.collection.JavaConverters._
+    self.map[(java.util.Map[String, ByteBuffer], java.util.List[ByteBuffer])] {
+      case row: U =>
+        (mapAsJavaMap(keyMarshaller(row)), seqAsJavaList(rowMarshaller(row)))
+    }.saveAsNewAPIHadoopFile(
+      conf.get(OUTPUT_KEYSPACE_CONFIG),
+      classOf[java.util.Map[String, ByteBuffer]],
+      classOf[java.util.List[ByteBuffer]],
+      classOf[CqlOutputFormat],
+      conf
+    )
+  }
+
+
 }

@@ -7,7 +7,7 @@ object CalliopeBuild extends Build {
   val VERSION = "0.7.2-SNAPSHOT"
   val SCALA_VERSION = "2.9.3"
   val SPARK_VERSION = "0.7.2"
-  val CAS_VERSION = "1.2.5"
+  val CAS_VERSION = "1.2.6"
   val THRIFT_VERSION = "0.7.0"
 
   lazy val calliope = {
@@ -72,7 +72,9 @@ object CalliopeBuild extends Build {
 
       organizationName := "Tuplejump Software Pvt. Ltd.",
 
-      organizationHomepage := Some(url("http://www.tuplejump.com"))
+      organizationHomepage := Some(url("http://www.tuplejump.com")),
+
+      resolvers += "Cas-1.6" at "https://repository.apache.org/content/repositories/orgapachecassandra-068/"
     )
 
     Project(
