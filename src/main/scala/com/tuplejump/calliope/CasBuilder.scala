@@ -1,13 +1,12 @@
 package com.tuplejump.calliope
 
-import org.apache.cassandra.hadoop.ConfigHelper
+import com.tuplejump.calliope.hadoop.ConfigHelper
 import org.apache.cassandra.thrift.{SliceRange, SlicePredicate}
-import spark.Partition
 import org.apache.hadoop.mapreduce.Job
 import org.apache.cassandra.utils.ByteBufferUtil
 
 import scala.collection.JavaConversions._
-import com.tuplejump.calliope.queries.{FinalQuery, ThriftQuery}
+import com.tuplejump.calliope.queries.FinalQuery
 import org.apache.hadoop.conf.Configuration
 
 trait CasBuilder {
@@ -15,14 +14,16 @@ trait CasBuilder {
 }
 
 object CasBuilder {
+  def cql3 = new BaseCasBuilder()
+
   def thrift = new BaseCasBuilder()
 }
 
 class BaseCasBuilder {
-  def withColumnFamily(keyspace: String, columnFamily: String) = new CasThriftBuilder(keyspace, columnFamily)
+  def withColumnFamily(keyspace: String, columnFamily: String) = new ThriftCasBuilder(keyspace, columnFamily)
 }
 
-class CasThriftBuilder(keyspace: String,
+class ThriftCasBuilder(keyspace: String,
                        columnFamily: String,
                        hasWideRows: Boolean = false,
                        host: String = "localhost",
@@ -36,34 +37,34 @@ class CasThriftBuilder(keyspace: String,
                        colSliceTo: Array[Byte] = Array.empty[Byte]
                         ) extends CasBuilder {
 
-  def onHost(h: String) = new CasThriftBuilder(
+  def onHost(h: String) = new ThriftCasBuilder(
     keyspace, columnFamily, hasWideRows, h, port, partitioner, columns, username, password, query, colSliceFrom, colSliceTo)
 
-  def onPort(p: String) = new CasThriftBuilder(
+  def onPort(p: String) = new ThriftCasBuilder(
     keyspace, columnFamily, hasWideRows, host, p, partitioner, columns, username, password, query, colSliceFrom, colSliceTo)
 
-  def patitionedUsing(p: CasPartitioners.Value) = new CasThriftBuilder(
+  def patitionedUsing(p: CasPartitioners.Value) = new ThriftCasBuilder(
     keyspace, columnFamily, hasWideRows, host, port, p, columns, username, password, query, colSliceFrom, colSliceTo)
 
-  def columns(c: List[String]) = new CasThriftBuilder(
+  def columns(c: List[String]) = new ThriftCasBuilder(
     keyspace, columnFamily, hasWideRows, host, port, partitioner, Some(c), username, password, query, colSliceFrom, colSliceTo)
 
-  def columns(c: String*) = new CasThriftBuilder(
+  def columns(c: String*) = new ThriftCasBuilder(
     keyspace, columnFamily, hasWideRows, host, port, partitioner, Some(c.toList), username, password, query, colSliceFrom, colSliceTo)
 
-  def forWideRows(hwr: Boolean) = new CasThriftBuilder(
+  def forWideRows(hwr: Boolean) = new ThriftCasBuilder(
     keyspace, columnFamily, hwr, host, port, partitioner, columns, username, password, query, colSliceFrom, colSliceTo)
 
-  def columnsInRange(start: Array[Byte], finish: Array[Byte]) = new CasThriftBuilder(
+  def columnsInRange(start: Array[Byte], finish: Array[Byte]) = new ThriftCasBuilder(
     keyspace, columnFamily, hasWideRows, host, port, partitioner, columns, username, password, query, start, finish)
 
-  def authAs(user: String) = new CasThriftBuilder(
+  def authAs(user: String) = new ThriftCasBuilder(
     keyspace, columnFamily, hasWideRows, host, port, partitioner, columns, Some(user), password, query, colSliceFrom, colSliceTo)
 
-  def withPassword(pass: String) = new CasThriftBuilder(
+  def withPassword(pass: String) = new ThriftCasBuilder(
     keyspace, columnFamily, hasWideRows, host, port, partitioner, columns, username, Some(pass), query, colSliceFrom, colSliceTo)
 
-  def where(q: FinalQuery) = new CasThriftBuilder(
+  def where(q: FinalQuery) = new ThriftCasBuilder(
     keyspace, columnFamily, hasWideRows, host, port, partitioner, columns, username, password, Some(q), colSliceFrom, colSliceTo)
 
   def configuration = {

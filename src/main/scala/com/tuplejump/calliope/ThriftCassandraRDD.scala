@@ -3,16 +3,16 @@ package com.tuplejump.calliope
 import spark._
 import org.apache.hadoop.mapreduce.{TaskAttemptID, JobID, HadoopMapReduceUtil, InputSplit}
 import org.apache.hadoop.io.Writable
-import org.apache.cassandra.hadoop.ColumnFamilyInputFormat
+import com.tuplejump.calliope.hadoop.ColumnFamilyInputFormat
 import java.nio.ByteBuffer
 import scala.collection.JavaConversions._
 import java.text.SimpleDateFormat
 import java.util.Date
 
 
-class CassandraRDD[T: Manifest](sc: SparkContext,
-                                @transient cas: CasBuilder,
-                                unmarshaller: (ByteBuffer, Map[ByteBuffer, ByteBuffer]) => T)
+class ThriftCassandraRDD[T: Manifest](sc: SparkContext,
+                                      @transient cas: ThriftCasBuilder,
+                                      unmarshaller: (ByteBuffer, Map[ByteBuffer, ByteBuffer]) => T)
   extends RDD[T](sc, Nil)
   with HadoopMapReduceUtil
   with Logging {
@@ -63,7 +63,7 @@ class CassandraRDD[T: Manifest](sc: SparkContext,
         case (name, column) => column.name() -> column.value()
       }.toMap
 
-      return unmarshaller(reader.getCurrentKey, rowAsMap)
+      unmarshaller(reader.getCurrentKey, rowAsMap)
       //return (keyUnmarshaller(reader.getCurrentKey), rowUnmarshaller(rowAsMap))
     }
 
@@ -93,53 +93,42 @@ class CassandraRDD[T: Manifest](sc: SparkContext,
   }
 }
 
+class ThriftCassandraSparkContext(self: SparkContext) {
 
-case class CassandraPartition(rddId: Int, val idx: Int, @transient s: InputSplit) extends Partition {
-
-  val inputSplit = new SerializableWritable(s.asInstanceOf[InputSplit with Writable])
-
-  override def hashCode(): Int = (41 * (41 + rddId) + idx)
-
-  override val index: Int = idx
-}
-
-
-class CassandraAwareSparkContext(self: SparkContext) {
-
-  def cassandra[T](keyspace: String, columnFamily: String)
-                  (implicit unmarshaller: (ByteBuffer, Map[ByteBuffer, ByteBuffer]) => T,
-                   tm: Manifest[T]) = {
+  def thriftCassandra[T](keyspace: String, columnFamily: String)
+                        (implicit unmarshaller: (ByteBuffer, Map[ByteBuffer, ByteBuffer]) => T,
+                         tm: Manifest[T]) = {
     val cas = CasBuilder.thrift.withColumnFamily(keyspace, columnFamily)
-    this.cassandra[T](cas)
+    this.thriftCassandra[T](cas)
   }
 
-  def cassandra[K, V](keyspace: String, columnFamily: String)
-                     (implicit keyUnmarshaller: ByteBuffer => K,
-                      rowUnmarshaller: Map[ByteBuffer, ByteBuffer] => V,
-                      km: Manifest[K], kv: Manifest[V]) = {
+  def thriftCassandra[K, V](keyspace: String, columnFamily: String)
+                           (implicit keyUnmarshaller: ByteBuffer => K,
+                            rowUnmarshaller: Map[ByteBuffer, ByteBuffer] => V,
+                            km: Manifest[K], kv: Manifest[V]) = {
     val cas = CasBuilder.thrift.withColumnFamily(keyspace, columnFamily)
-    this.cassandra[K, V](cas)
+    this.thriftCassandra[K, V](cas)
   }
 
-  def cassandra[T](cas: CasBuilder)
-                  (implicit unmarshaller: (ByteBuffer, Map[ByteBuffer, ByteBuffer]) => T,
-                   tm: Manifest[T]) = {
-    new CassandraRDD[T](self, cas, unmarshaller)
+  def thriftCassandra[T](cas: ThriftCasBuilder)
+                        (implicit unmarshaller: (ByteBuffer, Map[ByteBuffer, ByteBuffer]) => T,
+                         tm: Manifest[T]) = {
+    new ThriftCassandraRDD[T](self, cas, unmarshaller)
   }
 
-  def cassandra[K, V](cas: CasBuilder)
-                     (implicit keyUnmarshaller: ByteBuffer => K,
-                      rowUnmarshaller: Map[ByteBuffer, ByteBuffer] => V,
-                      km: Manifest[K], kv: Manifest[V]) = {
+  def thriftCassandra[K, V](cas: ThriftCasBuilder)
+                           (implicit keyUnmarshaller: ByteBuffer => K,
+                            rowUnmarshaller: Map[ByteBuffer, ByteBuffer] => V,
+                            km: Manifest[K], kv: Manifest[V]) = {
 
     implicit def xmer = CasHelper.kvTransformer(keyUnmarshaller, rowUnmarshaller)
-    this.cassandra[(K, V)](cas)
+    this.thriftCassandra[(K, V)](cas)
   }
 
 
 }
 
-object CasHelper {
+private object CasHelper {
   def kvTransformer[K, V](keyUnmarshaller: ByteBuffer => K,
                           rowUnmarshaller: Map[ByteBuffer, ByteBuffer] => V) = {
     {
