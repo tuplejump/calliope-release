@@ -3,18 +3,16 @@ package com.tuplejump.calliope
 import spark._
 import org.apache.hadoop.mapreduce.{TaskAttemptID, JobID, HadoopMapReduceUtil, InputSplit}
 import org.apache.hadoop.io.Writable
-import org.apache.cassandra.hadoop.{ColumnFamilyRecordReader, ConfigHelper, ColumnFamilyInputFormat}
-import org.apache.hadoop.conf.Configuration
+import org.apache.cassandra.hadoop.ColumnFamilyInputFormat
 import java.nio.ByteBuffer
 import scala.collection.JavaConversions._
-import com.tuplejump.calliope.RichByteBuffer._
 import java.text.SimpleDateFormat
 import java.util.Date
 
 
 class CassandraRDD[T: Manifest](sc: SparkContext,
                                 @transient cas: CasBuilder,
-                                marshaller: (ByteBuffer, Map[ByteBuffer, ByteBuffer]) => T)
+                                unmarshaller: (ByteBuffer, Map[ByteBuffer, ByteBuffer]) => T)
   extends RDD[T](sc, Nil)
   with HadoopMapReduceUtil
   with Logging {
@@ -65,7 +63,7 @@ class CassandraRDD[T: Manifest](sc: SparkContext,
         case (name, column) => column.name() -> column.value()
       }.toMap
 
-      return marshaller(reader.getCurrentKey, rowAsMap)
+      return unmarshaller(reader.getCurrentKey, rowAsMap)
       //return (keyUnmarshaller(reader.getCurrentKey), rowUnmarshaller(rowAsMap))
     }
 
