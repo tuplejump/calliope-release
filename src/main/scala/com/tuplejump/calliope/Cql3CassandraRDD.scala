@@ -6,7 +6,7 @@ import java.nio.ByteBuffer
 import scala.collection.JavaConversions._
 import java.text.SimpleDateFormat
 import java.util.Date
-import com.tuplejump.calliope.hadoop.cql3.CqlPagingInputFormat
+import org.apache.cassandra.hadoop.cql3.CqlPagingInputFormat
 
 
 class Cql3CassandraRDD[T: Manifest](sc: SparkContext,
@@ -106,13 +106,13 @@ class Cql3CassandraSparkContext(self: SparkContext) {
     this.cql3Cassandra[K, V](cas)
   }
 
-  def cql3Cassandra[T](cas: CasBuilder)
+  def cql3Cassandra[T](cas: Cql3CasBuilder)
                       (implicit unmarshaller: (Map[String, ByteBuffer], Map[String, ByteBuffer]) => T,
                        tm: Manifest[T]) = {
     new Cql3CassandraRDD[T](self, cas, unmarshaller)
   }
 
-  def cql3Cassandra[K, V](cas: CasBuilder)
+  def cql3Cassandra[K, V](cas: Cql3CasBuilder)
                          (implicit keyUnmarshaller: Map[String, ByteBuffer] => K,
                           rowUnmarshaller: Map[String, ByteBuffer] => V,
                           km: Manifest[K], kv: Manifest[V]) = {

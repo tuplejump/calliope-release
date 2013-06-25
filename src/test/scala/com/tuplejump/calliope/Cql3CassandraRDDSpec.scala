@@ -25,56 +25,34 @@ class Cql3CassandraRDDSpec extends FunSpec with BeforeAndAfterAll with ShouldMat
 
   val sc = new SparkContext("local[1]", "castest")
 
-  describe("Cassandra RDD") {
-
-    /* it("should be able to get data partitions") {
-       val cas = CasBuilder.thrift.withColumnFamily(TEST_KEYSPACE, TEST_INPUT_COLUMN_FAMILY)
-       val casrdd = sc.cql3Cassandra[String, Map[String, String]](cas)
-
-       val partitions: Array[Partition] = casrdd.getPartitions
-
-       assert(partitions.length == CASSANDRA_NODE_COUNT)
-     }
-
-     it("should be able to give preferred locations for partitions") {
-       val cas = CasBuilder.thrift.withColumnFamily(TEST_KEYSPACE, TEST_INPUT_COLUMN_FAMILY)
-
-       val casrdd = sc.cql3Cassandra[String, Map[String, String]](cas)
-
-       val partitions: Array[Partition] = casrdd.getPartitions
-
-       partitions.map {
-         p => casrdd.getPreferredLocations(p) must not be (null)
-       }
-
-     }
-
-     it("should be able to build and process RDD[K,V]") {
-       val cas = CasBuilder.thrift.withColumnFamily(TEST_KEYSPACE, TEST_INPUT_COLUMN_FAMILY)
-
-       val casrdd = sc.cql3Cassandra[String, Map[String, String]](cas)
-       //This is same as calling,
-       //val casrdd = sc.cassandra[String, Map[String, String]](TEST_KEYSPACE, TEST_INPUT_COLUMN_FAMILY)
-
-       val result = casrdd.collect().toMap
-
-       val resultKeys = result.keys
-
-       resultKeys must be(Set("3musk001", "thelostworld001", "3musk003", "3musk002", "thelostworld002"))
-
-     }       */
-
-
+  describe("Cql3 Cassandra RDD") {
     it("should be able to build and process RDD[U]") {
-      val cas = CasBuilder.thrift.withColumnFamily("rohit_tuplejumpcom_newapp002", "endpoint0001").forWideRows(true)
+      val cas = CasBuilder.cql3.withColumnFamily("cql3_test", "emp_read_test")
 
       import Cql3CRDDTransformers._
-      val casrdd = sc.cql3Cassandra[Map[String, String], Map[String, String]](cas)
+      val casrdd = sc.cql3Cassandra[Employee](cas)
 
       val result = casrdd.collect().toList
 
-      println(result)
+      result must have length (5)
+      result should contain(Employee(20, 105, "jack", "carpenter"))
+      result should contain(Employee(20, 106, "john", "grumpy"))
     }
+
+    it("should be able to use secodary indexes") {
+      val cas = CasBuilder.cql3.withColumnFamily("cql3_test", "emp_read_test").where("first_name = 'john'")
+
+      import Cql3CRDDTransformers._
+      val casrdd = sc.cql3Cassandra[Employee](cas)
+
+      val result = casrdd.collect().toList
+
+      result must have length (1)
+      result should contain(Employee(20, 106, "john", "grumpy"))
+
+      result should not contain (Employee(20, 105, "jack", "carpenter"))
+    }
+
 
   }
 
@@ -91,7 +69,12 @@ private object Cql3CRDDTransformers {
     row.keys.toList
   }
 
-  implicit def cql3Row2Mapss(keys: Map[String, ByteBuffer], values: Map[String, ByteBuffer]): (Map[String, String], Map[String, String]) = {
+  /* implicit def cql3Row2Mapss(keys: Map[String, ByteBuffer], values: Map[String, ByteBuffer]): (Map[String, String], Map[String, String]) = {
     (keys, values)
-  }
+  }  */
+
+  implicit def cql3Row2Emp(keys: Map[String, ByteBuffer], values: Map[String, ByteBuffer]): Employee =
+    Employee(keys.get("deptid").get, keys.get("empid").get, values.get("first_name").get, values.get("last_name").get)
 }
+
+case class Employee(deptId: Int, empId: Int, firstName: String, lastName: String)

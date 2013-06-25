@@ -4,7 +4,7 @@ import spark.{Logging, RDD}
 import org.apache.hadoop.mapreduce.HadoopMapReduceUtil
 import java.nio.ByteBuffer
 import org.apache.cassandra.thrift.{Column, Mutation, ColumnOrSuperColumn}
-import com.tuplejump.calliope.hadoop.ColumnFamilyOutputFormat
+import org.apache.cassandra.hadoop.ColumnFamilyOutputFormat
 import scala.collection.JavaConversions._
 
 import spark.SparkContext._
@@ -15,8 +15,8 @@ class CassandraRDDFunctions[U](self: RDD[U])
   val INPUT_KEYSPACE_CONFIG: String = "cassandra.input.keyspace"
 
   def thriftSaveToCassandra(cas: ThriftCasBuilder)
-                     (implicit keyMarshaller: U => ByteBuffer, rowMarshaller: U => Map[ByteBuffer, ByteBuffer],
-                      um: ClassManifest[U]) {
+                           (implicit keyMarshaller: U => ByteBuffer, rowMarshaller: U => Map[ByteBuffer, ByteBuffer],
+                            um: ClassManifest[U]) {
 
 
     val conf = cas.configuration

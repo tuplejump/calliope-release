@@ -3,7 +3,7 @@ package com.tuplejump.calliope
 import spark._
 import org.apache.hadoop.mapreduce.{TaskAttemptID, JobID, HadoopMapReduceUtil, InputSplit}
 import org.apache.hadoop.io.Writable
-import com.tuplejump.calliope.hadoop.ColumnFamilyInputFormat
+import org.apache.cassandra.hadoop.ColumnFamilyInputFormat
 import java.nio.ByteBuffer
 import scala.collection.JavaConversions._
 import java.text.SimpleDateFormat

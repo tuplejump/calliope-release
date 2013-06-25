@@ -25,7 +25,7 @@ class ThriftCassandraRDDSpec extends FunSpec with BeforeAndAfterAll with ShouldM
 
   val sc = new SparkContext("local", "castest")
 
-  describe("Cassandra RDD") {
+  describe("Thrift Cassandra RDD") {
 
     it("should be able to get data partitions") {
       val cas = CasBuilder.thrift.withColumnFamily(TEST_KEYSPACE, TEST_INPUT_COLUMN_FAMILY)
@@ -63,21 +63,6 @@ class ThriftCassandraRDDSpec extends FunSpec with BeforeAndAfterAll with ShouldM
       resultKeys must be(Set("3musk001", "thelostworld001", "3musk003", "3musk002", "thelostworld002"))
 
     }
-
-    //TODO: Add wide row support test case
-    /* it("should be able to build and process RDD[U]") {
-      val cas = CasBuilder.thrift.withColumnFamily("caswidetest", "clicks")
-
-      import CRDDTransformers._
-      //val casrdd = new CassandraRDD[String, Map[String, String]](sc, cas)
-      //val newcas = CasBuilder.thrift.withColumnFamily("rohit_tuplejumpcom_newapp002", "endpoint0001").forWideRows(true)
-      val casrdd = sc.cassandra[List[String]](cas)
-
-      val result = casrdd.collect().toList
-
-      println(result)
-    }  */
-
   }
 
   override def afterAll() {

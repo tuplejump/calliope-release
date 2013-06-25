@@ -33,6 +33,10 @@ object RichByteBuffer {
     case (k, v) => new Tuple2[String, String](k, v)
   }.toMap
 
+  implicit def MapSB2MapSI(m: Map[String, ByteBuffer]): Map[String, Int] = m.map {
+    case (k, v) => new Tuple2[String, Int](k, v)
+  }.toMap
+
   //implicit def ByteBuffer2String(buffer: ByteBuffer, charset: Charset): String = ByteBufferUtil.string(buffer, charset)
 
   implicit def MapBB2MapSS(m: Map[ByteBuffer, ByteBuffer]): Map[String, String] = m.map {
