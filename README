@@ -22,7 +22,9 @@ Enough, talk, show me the Code
 Here you go!
 
 ###Reading from Cassandra
+
 To read a **Column Family** names *Words* from a **keyspace** *casDemo* and create an RDD from it, here is the code required using Calliope, considering the **key** is a *String* and the **row** has all column names and values as *String*.
+This will use Thrift API to fetch the data and won't b able to fetch data from ColumnFamilies created with CQL and using composite keys.
 
 ```
 import com.tuplejump.calliope.RichByteBuffer._
@@ -33,6 +35,14 @@ val cas = CasBuilder.thrift.with("casDemo", "Words")
 val rdd = sc.cassandra[String, Map[String, String](cas)
 
 ```
+or a simpler way to do that is,
+
+```
+val rdd = sc.cassandra[String, Map[String, String]("casDemo", "Words")
+
+```
+
+
 
 And now you have a RDD[String, Map[String, String]]!
 

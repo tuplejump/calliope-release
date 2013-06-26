@@ -1,10 +1,11 @@
 package com.tuplejump.calliope.queries
 
-import com.tuplejump.calliope.RichByteBuffer
+import com.tuplejump.calliope.utils.RichByteBuffer
 import RichByteBuffer._
 import org.apache.cassandra.thrift.IndexOperator
 import org.scalatest.FunSpec
 import org.scalatest.matchers.{MustMatchers, ShouldMatchers}
+import com.tuplejump.calliope.utils.RichByteBuffer
 
 class QuerySpec extends FunSpec with ShouldMatchers with MustMatchers {
 

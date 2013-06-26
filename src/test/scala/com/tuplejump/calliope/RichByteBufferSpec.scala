@@ -4,6 +4,7 @@ import java.nio.ByteBuffer
 import org.apache.cassandra.utils.ByteBufferUtil
 import org.scalatest.FunSpec
 import org.scalatest.matchers.{MustMatchers, ShouldMatchers}
+import com.tuplejump.calliope.utils.RichByteBuffer
 
 class RichByteBufferSpec extends FunSpec with ShouldMatchers with MustMatchers {
   describe("RichByteBuffer") {
