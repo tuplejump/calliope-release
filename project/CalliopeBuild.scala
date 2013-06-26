@@ -72,9 +72,7 @@ object CalliopeBuild extends Build {
 
       organizationName := "Tuplejump Software Pvt. Ltd.",
 
-      organizationHomepage := Some(url("http://www.tuplejump.com")),
-
-      resolvers += "Cas-1.6" at "https://repository.apache.org/content/repositories/orgapachecassandra-068/"
+      organizationHomepage := Some(url("http://www.tuplejump.com"))
     )
 
     Project(
