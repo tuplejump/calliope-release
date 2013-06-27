@@ -28,28 +28,6 @@ class ThriftCassandraRDDSpec extends FunSpec with BeforeAndAfterAll with ShouldM
 
   describe("Thrift Cassandra RDD") {
 
-    it("should be able to get data partitions") {
-      val cas = CasBuilder.thrift.withColumnFamily(TEST_KEYSPACE, TEST_INPUT_COLUMN_FAMILY)
-      val casrdd = sc.thriftCassandra[String, Map[String, String]](cas)
-
-      val partitions: Array[Partition] = casrdd.getPartitions
-
-      assert(partitions.length == CASSANDRA_NODE_COUNT)
-    }
-
-    it("should be able to give preferred locations for partitions") {
-      val cas = CasBuilder.thrift.withColumnFamily(TEST_KEYSPACE, TEST_INPUT_COLUMN_FAMILY)
-
-      val casrdd = sc.thriftCassandra[String, Map[String, String]](cas)
-
-      val partitions: Array[Partition] = casrdd.getPartitions
-
-      partitions.map {
-        p => casrdd.getPreferredLocations(p) must not be (null)
-      }
-
-    }
-
     it("should be able to build and process RDD[K,V]") {
       val cas = CasBuilder.thrift.withColumnFamily(TEST_KEYSPACE, TEST_INPUT_COLUMN_FAMILY)
 
