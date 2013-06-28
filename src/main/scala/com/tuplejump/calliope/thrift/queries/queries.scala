@@ -1,30 +1,30 @@
-package com.tuplejump.cobalt.query
+package com.tuplejump.calliope.queries
 
 import org.apache.cassandra.thrift.{IndexOperator, IndexExpression}
 import java.nio.ByteBuffer
 
-/**
- * Created with IntelliJ IDEA.
- * User: rohit
- * Date: 3/1/13
- * Time: 7:01 PM
- * To change this template use File | Settings | File Templates.
- */
-
-trait Query {
-  protected[query] var expressions = List[IndexExpression]()
+trait ThriftQuery {
+  protected[queries] var expressions = List[IndexExpression]()
 }
 
-class EmptyQuery() extends Query {
+class Query() extends ThriftQuery {
   implicit val query = this
+
   def where(colName: ByteBuffer) = {
     new FirstColumn(colName)
   }
 }
 
-class InitializedQuery(q: Query) extends Query {
+object Query {
+  def apply() = new Query()
+
+  //def apply() = new Query()
+}
+
+class InitializedQuery(q: ThriftQuery) extends ThriftQuery {
   implicit val query = this
   this.expressions = q.expressions
+
   def and(colName: ByteBuffer) = {
     new Column(colName)
   }
@@ -40,14 +40,9 @@ object FinalQuery {
   implicit def Query2BuiltQuery(q: InitializedQuery) = new FinalQuery(q)
 }
 
-object Query extends EmptyQuery {
-  def apply = new EmptyQuery()
-}
-
-class FirstColumn(colName: ByteBuffer)(implicit query: Query) {
+class FirstColumn(colName: ByteBuffer)(implicit query: ThriftQuery) {
   def isEq(colValue: ByteBuffer) = {
     query.expressions ::= new IndexExpression(colName, IndexOperator.EQ, colValue)
-    println(query.expressions)
     new InitializedQuery(query)
   }
 }
@@ -78,4 +73,3 @@ class Column(colName: ByteBuffer)(implicit query: InitializedQuery) {
     query
   }
 }
-

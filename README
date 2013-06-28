@@ -1,5 +1,9 @@
-A sample for the Typesafe Stack (http://typesafe.com/stack).
+Calliope
+========
+Calliope is a library providing an interface to consume data from Cassandra to spark and store RDDs from Spark to Cassandra.
 
-Scala sample project using Scala and SBT.
+In Greek mythology, Calliope (/kəˈlaɪ.əpiː/ kə-ly-ə-pee; Ancient Greek: Καλλιόπη Kalliopē "beautiful-voiced") was the muse of epic poetry,daughter of Zeus and Mnemosyne, and is believed to be Homer's muse, the inspiration for the Odyssey and the Iliad.
 
-To run and test it use SBT invoke: 'sbt run'
+We hope Calliope will also be the muse for your epic data poetry!
+
+For more information visit - http://tuplejump.github.com/calliope

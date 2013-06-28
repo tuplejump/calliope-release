@@ -1,54 +1,84 @@
 import sbt._
 import sbt.Keys._
-import sbt.Classpaths.publishTask
+import scala.xml.NodeSeq
 
 object CalliopeBuild extends Build {
 
-  lazy val MavenCompile = config("m2r") extend (Compile)
-  lazy val publishLocalBoth = TaskKey[Unit]("publish-local", "publish local for m2 and ivy")
+  val VERSION = "0.7.2"
+  val SCALA_VERSION = "2.9.3"
+  val SPARK_VERSION = "0.7.2"
+  val CAS_VERSION = "1.2.6"
+  val THRIFT_VERSION = "0.7.0"
 
-  lazy val cobalt = Project(
+  lazy val calliope = {
+    val dependencies = libraryDependencies ++= Seq(
+      "org.spark-project" %% "spark-core" % SPARK_VERSION % "provided",
+      "org.apache.cassandra" % "cassandra-all" % CAS_VERSION intransitive(),
+      "org.apache.cassandra" % "cassandra-thrift" % CAS_VERSION intransitive(),
+      "org.apache.thrift" % "libthrift" % THRIFT_VERSION exclude("org.slf4j", "slf4j-api") exclude("javax.servlet", "servlet-api"),
+      "org.slf4j" % "slf4j-jdk14" % "1.7.5",
+      "org.scalatest" %% "scalatest" % "1.9.1" % "test"
+    )
 
-    id = "calliope",
 
-    base = file("."),
+    val pom = (
+      <scm>
+        <url>git@github.com:tuplejump/calliope.git</url>
+        <connection>scm:git:git@github.com:tuplejump/calliope.git</connection>
+      </scm>
+        <developers>
+          <developer>
+            <id>milliondreams</id>
+            <name>Rohit Rai</name>
+            <url>https://twitter.com/milliondreams</url>
+          </developer>
+        </developers>)
 
-    settings = Project.defaultSettings ++ Seq(
-
+    val calliopeSettings = Seq(
       name := "calliope",
 
-      organization := "com.tuplejump.calliope",
+      organization := "com.tuplejump",
 
-      version := "0.0.9-SNAPSHOT",
+      version := VERSION,
 
-      scalaVersion := "2.9.2",
+      scalaVersion := SCALA_VERSION,
 
-      fork in test := true,
+      dependencies,
 
-      libraryDependencies ++= Seq(
-        "org.spark-project" % "spark-core_2.9.2" % "0.6.2" % "provided",
-        "org.apache.cassandra" % "cassandra-all" % "1.2.1" % "provided",
-        "org.specs2" %% "specs2" % "1.12.3" % "test",
-        "com.twitter" % "util-logging" % "6.1.0",
-        "org.cassandraunit" % "cassandra-unit" % "1.1.1.2" % "test",
-        "org.hectorclient" % "hector-core" % "1.1-2" exclude("org.apache.cassandra", "cassandra-thrift")
-      ),
+      parallelExecution in Test := false,
 
-      resolvers <+= sbtResolver,
-      otherResolvers := Seq(Resolver.file("dotM2", file(Path.userHome + "/.m2/repository"))),
-      publishLocalConfiguration in MavenCompile <<= (packagedArtifacts, deliverLocal, ivyLoggingLevel) map {
-        (arts, _, level) => new PublishConfiguration(None, "dotM2", arts, Seq(), level)
+      pomExtra := pom,
+
+      publishArtifact in Test := false,
+
+      pomIncludeRepository := {
+        _ => false
       },
-      publishMavenStyle in MavenCompile := true,
-      publishLocal in MavenCompile <<= publishTask(publishLocalConfiguration in MavenCompile, deliverLocal),
-      publishLocalBoth <<= Seq(publishLocal in MavenCompile, publishLocal).dependOn,
 
-      resolvers ++= Seq(
-        //"sonatype" at "http://oss.sonatype.org/content/repositories/releases",
-        "Twitter's Repository" at "http://maven.twttr.com/"
-        //"akka" at "http://repo.akka.io/releases/",
-        //"spray" at "http://repo.spray.cc/"
-      )
+      publishMavenStyle := true,
+
+      publishTo <<= version {
+        (v: String) =>
+          val nexus = "https://oss.sonatype.org/"
+          if (v.trim.endsWith("SNAPSHOT"))
+            Some("snapshots" at nexus + "content/repositories/snapshots")
+          else
+            Some("releases" at nexus + "service/local/staging/deploy/maven2")
+      },
+
+      licenses := Seq("Apache License, Version 2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
+
+      homepage := Some(url("https://github.com/tuplejump/calliope")),
+
+      organizationName := "Tuplejump Software Pvt. Ltd.",
+
+      organizationHomepage := Some(url("http://www.tuplejump.com"))
     )
-  )
+
+    Project(
+      id = "calliope",
+      base = file("."),
+      settings = Project.defaultSettings ++ calliopeSettings
+    )
+  }
 }
