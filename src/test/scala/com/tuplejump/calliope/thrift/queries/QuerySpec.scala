@@ -36,7 +36,7 @@ class QuerySpec extends FunSpec with ShouldMatchers with MustMatchers {
       q.isInstanceOf[InitializedQuery] must be(true)
 
       //This will not compile
-      //q.where
+      //query.where
 
       q.and _ //verify that you have 'and'
 
