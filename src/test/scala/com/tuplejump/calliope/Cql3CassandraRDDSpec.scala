@@ -4,7 +4,8 @@ import org.scalatest.{BeforeAndAfterAll, FunSpec}
 import spark.{Partition, SparkContext}
 import org.scalatest.matchers.{MustMatchers, ShouldMatchers}
 import java.nio.ByteBuffer
-import com.tuplejump.calliope.RichByteBuffer._
+import com.tuplejump.calliope.utils.RichByteBuffer
+import RichByteBuffer._
 
 import Implicits._
 

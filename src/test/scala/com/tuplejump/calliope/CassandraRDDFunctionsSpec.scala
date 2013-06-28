@@ -5,6 +5,7 @@ import org.scalatest.matchers.{MustMatchers, ShouldMatchers}
 import spark.SparkContext
 import java.nio.ByteBuffer
 import java.util.UUID
+import com.tuplejump.calliope.utils.RichByteBuffer
 import RichByteBuffer._
 import com.tuplejump.calliope.Implicits._
 

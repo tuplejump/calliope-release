@@ -1,10 +1,11 @@
 package com.tuplejump.calliope.queries
 
-import com.tuplejump.calliope.RichByteBuffer
+import com.tuplejump.calliope.utils.RichByteBuffer
 import RichByteBuffer._
 import org.apache.cassandra.thrift.IndexOperator
 import org.scalatest.FunSpec
 import org.scalatest.matchers.{MustMatchers, ShouldMatchers}
+import com.tuplejump.calliope.utils.RichByteBuffer
 
 class QuerySpec extends FunSpec with ShouldMatchers with MustMatchers {
 
@@ -35,7 +36,7 @@ class QuerySpec extends FunSpec with ShouldMatchers with MustMatchers {
       q.isInstanceOf[InitializedQuery] must be(true)
 
       //This will not compile
-      //q.where
+      //query.where
 
       q.and _ //verify that you have 'and'
 

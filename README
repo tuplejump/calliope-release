@@ -2,64 +2,8 @@ Calliope
 ========
 Calliope is a library providing an interface to consume data from Cassandra to spark and store RDDs from Spark to Cassandra.
 
-Why Cassandra + Spark?
-----------------------
-Cassandra + Spark is the match made in heaven! Spark with it's in memory mapreduce allows us to process data upto 10x faster than Hadoop MapReduce, opening doors to iterative map reduce, complex process chains in a plain and simple start and so much more. Spark did away with the complex setup and configuration required by Hadoop M/R in it's early days. Overall, it make big data crunching fun!
+In Greek mythology, Calliope (/kəˈlaɪ.əpiː/ kə-ly-ə-pee; Ancient Greek: Καλλιόπη Kalliopē "beautiful-voiced") was the muse of epic poetry,daughter of Zeus and Mnemosyne, and is believed to be Homer's muse, the inspiration for the Odyssey and the Iliad.
 
-The only bottleneck now is the HDFS or worse HBASE, which are still used by many Spark developers to build the applications and providing a distributed data store to the RDDs. Setting up and maintaining HDFS and maintianing the cluster, requires effort and experience. All HDFS provides is a filesystem. Anything you put there is a file and will be read line by line. This may work for unstructured data, but not so much wth strutured one. The problem with both these solutions is htey are Hadoop! There I said it!!!
+We hope Calliope will also be the muse for your epic data poetry!
 
-Come in Cassandra, built on Dynamo's gossip with BigTable's column oriented storage, Cassandra provides a resilient fualt tollerant robust very high speed data store. Coming from the NoSQL family of databses, it provides flexible schema support, which makes it good for structured as well as unstructured data. Setting up and managing Cassandra cluster's is quick and easy.
-
-Cassandra storage bckend with Spark will open many new avenues.
-
-Why Calliope?
-------------
-Spark supports any Hadoop Input/Output provider and we know there is a Hadoop I/O for Cassandra, so I can simply use it! 
-Yes, sure you can, and for now Calliope uses the same. But contrary to the Hadoop I/O API which was designed for java and Hadoop way of doing things, Calliope provides a improved cleaner API to create and persist RDDs, without exposing you to the internals. In furutre we would like to move away from Hadoop I/O here and build our own fat-free alternative. But, don't worry, we won't change the API for that.
-
-Enough, talk, show me the Code
-------------------------------
-Here you go!
-
-###Reading from Cassandra
-To read a **Column Family** names *Words* from a **keyspace** *casDemo* and create an RDD from it, here is the code required using Calliope, considering the **key** is a *String* and the **row** has all column names and values as *String*.
-
-```
-import com.tuplejump.calliope.RichByteBuffer._
-import com.tuplejump.calliope.Implicits._
-import com.tuplejump.calliope.CasBuilder
-
-val cas = CasBuilder.thrift.with("casDemo", "Words")
-val rdd = sc.cassandra[String, Map[String, String](cas)
-
-```
-
-And now you have a RDD[String, Map[String, String]]!
-
-To fully appreciate the ease and terseness of the above code, I recomend you take a look at the the Cassandra example in Spark examples code.
-
-###Writing to Cassandra
-To write an RDD[String, Map[String, String]] a **Column Family** names *Words* from a **keyspace** *casDemo* 
-
-```
-import com.tuplejump.calliope.RichByteBuffer._
-import com.tuplejump.calliope.Implicits._
-import com.tuplejump.calliope.CasBuilder
-
-val cas = CasBuilder.thrift.with("casDemo", "Words")
-rdd.saveToCassandra(cas)
-```
-
-### More examples
-See the test cases!
-
-Troubleshooting
----------------
-
-* Why do I get a "No Implicit View Defined for X => Y" message while compiling?
-
-Calliope relies on Implicits to convert to and from ByteBuffer and structures around it to Usable data types. In case you have a key or value type that doesn't have a implicit convertor defined, you will have to write one of your own. Don't worry this is easy, just look at the test cases.
-
-* Why do I get a ByteBuffer not Serializable error while the computing on RDD created from Cassandra?
-
-You **should** give Type Parameters to sc.cassandra method and provide appropriate transformers for that.
+For more information visit - http://tuplejump.github.com/calliope

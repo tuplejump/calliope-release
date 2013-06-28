@@ -1,4 +1,4 @@
-package com.tuplejump.calliope
+package com.tuplejump.calliope.utils
 
 import org.apache.hadoop.mapreduce.InputSplit
 import spark.{SerializableWritable, Partition}
