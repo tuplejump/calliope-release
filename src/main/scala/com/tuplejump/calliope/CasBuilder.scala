@@ -29,7 +29,7 @@ import com.tuplejump.calliope.queries.FinalQuery
 import org.apache.hadoop.conf.Configuration
 import org.apache.cassandra.hadoop.cql3.CqlConfigHelper
 
-trait CasBuilder {
+trait CasBuilder extends Serializable {
   def configuration: Configuration
 }
 
