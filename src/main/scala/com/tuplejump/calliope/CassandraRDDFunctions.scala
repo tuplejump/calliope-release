@@ -31,6 +31,7 @@ import org.apache.cassandra.hadoop.cql3.CqlOutputFormat
 
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
+import scala.Predef._
 
 
 class CassandraRDDFunctions[U](self: RDD[U])
@@ -182,7 +183,7 @@ class CassandraRDDFunctions[U](self: RDD[U])
       "Query to save the records to cassandra must be set using saveWithQuery on cas")
 
     self.map[(java.util.Map[String, ByteBuffer], java.util.List[ByteBuffer])] {
-      case row: U =>
+      row =>
         (mapAsJavaMap(keyMarshaller(row)), seqAsJavaList(rowMarshaller(row)))
     }.saveAsNewAPIHadoopFile(
       conf.get(OUTPUT_KEYSPACE_CONFIG),
@@ -191,6 +192,29 @@ class CassandraRDDFunctions[U](self: RDD[U])
       classOf[CqlOutputFormat],
       conf
     )
+  }
+
+  def simpleSavetoCas(keyspace: String, columnFamily: String, keyCols: List[String], valueCols: List[String])
+                     (implicit marshaller: U => Map[String, ByteBuffer], um: ClassManifest[U]) {
+    import com.tuplejump.calliope.Implicits._
+    val valPart = valueCols.map(_ + " = ?").mkString(",")
+
+    val cas = CasBuilder.cql3.withColumnFamily(keyspace, columnFamily)
+      .saveWithQuery("UPDATE " + keyspace + "." + columnFamily +
+      " set " + valPart)
+
+    val mappedSelf = self.map {
+      row =>
+        val rowMap = marshaller(row)
+        val keysMap = rowMap -- valueCols
+        val valuesMap = rowMap -- keyCols
+        (keysMap, valuesMap)
+    }
+
+    implicit def keyMarshaller(r: (Map[String, ByteBuffer], Map[String, ByteBuffer])) = r._1
+    implicit def valueMarshaller(r: (Map[String, ByteBuffer], Map[String, ByteBuffer])) = r._2.values.toList
+
+    mappedSelf.cql3SaveToCassandra(cas)
   }
 
 

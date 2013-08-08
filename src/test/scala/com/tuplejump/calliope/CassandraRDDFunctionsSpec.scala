@@ -46,7 +46,8 @@ class CassandraRDDFunctionsSpec extends FunSpec with BeforeAndAfterAll with Shou
     }
 
     it("should allow persistence using CQL") {
-      import CRDDFuncTransformers._
+      import CRDDFuncTransformers.EmployeeToKeys
+      import CRDDFuncTransformers.EmployeeToVal
       import Cql3CRDDTransformers._
 
       val data = List(
@@ -73,7 +74,36 @@ class CassandraRDDFunctionsSpec extends FunSpec with BeforeAndAfterAll with Shou
       result should contain(Employee(21, 110, "alan", "turing"))
 
     }
+
+    it("should allow persistence using Simple API via CQL") {
+      import Cql3CRDDTransformers._
+      import CRDDFuncTransformers.EmployeeToMap
+
+      val casrdd = sc.cql3Cassandra[Employee](CQL_TEST_KEYSPACE, CQL_TEST_OUTPUT_COLUMN_FAMILY)
+      val initCount = casrdd.collect().length
+
+      val data = List(
+        Employee(31, 210, "emily", "richards"),
+        Employee(31, 211, "fanie", "mae"),
+        Employee(32, 208, "godric", "wolf"),
+        Employee(33, 202, "harry", "potter")
+      )
+
+      val rdd = sc.parallelize(data)
+
+      rdd.simpleSavetoCas(CQL_TEST_KEYSPACE,
+        CQL_TEST_OUTPUT_COLUMN_FAMILY,
+        List("deptid", "empid"), List("first_name", "last_name"))
+
+      val result = casrdd.collect()
+
+      result must have length (initCount + 4)
+
+      result should contain(Employee(31, 210, "emily", "richards"))
+
+    }
   }
+
 
   override def afterAll() {
     sc.stop()
@@ -110,6 +140,10 @@ private object CRDDFuncTransformers {
 
   implicit def EmployeeToVal(e: Employee): List[ByteBuffer] = {
     List(e.firstName, e.lastName)
+  }
+
+  implicit def EmployeeToMap(e: Employee): Map[String, ByteBuffer] = {
+    Map("deptid" -> e.deptId, "empid" -> e.empId, "first_name" -> e.firstName, "last_name" -> e.lastName)
   }
 
 }
