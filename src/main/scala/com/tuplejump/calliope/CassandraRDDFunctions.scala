@@ -49,8 +49,7 @@ class CassandraRDDFunctions[U](self: RDD[U])
    *
    */
   def thriftSaveToCassandra(keyspace: String, columnFamily: String)
-                           (implicit keyMarshaller: U => ByteBuffer, rowMarshaller: U => Map[ByteBuffer, ByteBuffer],
-                            um: ClassManifest[U]) {
+                           (implicit keyMarshaller: U => ByteBuffer, rowMarshaller: U => Map[ByteBuffer, ByteBuffer]) {
     thriftSaveToCassandra(CasBuilder.thrift.withColumnFamily(keyspace, columnFamily))
   }
 
@@ -67,8 +66,7 @@ class CassandraRDDFunctions[U](self: RDD[U])
    *
    */
   def thriftSaveToCassandra(host: String, port: String, keyspace: String, columnFamily: String)
-                           (implicit keyMarshaller: U => ByteBuffer, rowMarshaller: U => Map[ByteBuffer, ByteBuffer],
-                            um: ClassManifest[U]) {
+                           (implicit keyMarshaller: U => ByteBuffer, rowMarshaller: U => Map[ByteBuffer, ByteBuffer]) {
     thriftSaveToCassandra(CasBuilder.thrift.withColumnFamily(keyspace, columnFamily).onHost(host).onPort(port))
   }
 
@@ -84,16 +82,14 @@ class CassandraRDDFunctions[U](self: RDD[U])
    *
    */
   def thriftSaveToCassandra(cas: ThriftCasBuilder)
-                           (implicit keyMarshaller: U => ByteBuffer, rowMarshaller: U => Map[ByteBuffer, ByteBuffer],
-                            um: ClassManifest[U]) {
+                           (implicit keyMarshaller: U => ByteBuffer, rowMarshaller: U => Map[ByteBuffer, ByteBuffer]) {
 
 
     val conf = cas.configuration
 
 
     self.map[(ByteBuffer, java.util.List[Mutation])] {
-      case x: U =>
-        (x, mapToMutations(x))
+      x => (x, mapToMutations(x))
     }.saveAsNewAPIHadoopFile(
       conf.get(OUTPUT_KEYSPACE_CONFIG),
       classOf[ByteBuffer],
@@ -132,8 +128,7 @@ class CassandraRDDFunctions[U](self: RDD[U])
    */
 
   def cql3SaveToCassandra(keyspace: String, columnFamily: String, updateCql: String)
-                         (implicit keyMarshaller: U => Map[String, ByteBuffer], rowMarshaller: U => List[ByteBuffer],
-                          um: ClassManifest[U]) {
+                         (implicit keyMarshaller: U => Map[String, ByteBuffer], rowMarshaller: U => List[ByteBuffer]) {
     cql3SaveToCassandra(CasBuilder.cql3.withColumnFamily(keyspace, columnFamily).saveWithQuery(updateCql))
   }
 
@@ -154,8 +149,7 @@ class CassandraRDDFunctions[U](self: RDD[U])
    *
    */
   def cql3SaveToCassandra(host: String, port: String, keyspace: String, columnFamily: String, updateCql: String)
-                         (implicit keyMarshaller: U => Map[String, ByteBuffer], rowMarshaller: U => List[ByteBuffer],
-                          um: ClassManifest[U]) {
+                         (implicit keyMarshaller: U => Map[String, ByteBuffer], rowMarshaller: U => List[ByteBuffer]) {
     cql3SaveToCassandra(CasBuilder.cql3.withColumnFamily(keyspace, columnFamily)
       .onHost(host)
       .onPort(port)
@@ -174,16 +168,14 @@ class CassandraRDDFunctions[U](self: RDD[U])
    *
    */
   def cql3SaveToCassandra(cas: Cql3CasBuilder)
-                         (implicit keyMarshaller: U => Map[String, ByteBuffer], rowMarshaller: U => List[ByteBuffer],
-                          um: ClassManifest[U]) {
+                         (implicit keyMarshaller: U => Map[String, ByteBuffer], rowMarshaller: U => List[ByteBuffer]) {
     val conf = cas.configuration
 
     require(conf.get(OUTPUT_CQL) != null && !conf.get(OUTPUT_CQL).isEmpty,
       "Query to save the records to cassandra must be set using saveWithQuery on cas")
 
     self.map[(java.util.Map[String, ByteBuffer], java.util.List[ByteBuffer])] {
-      case row: U =>
-        (mapAsJavaMap(keyMarshaller(row)), seqAsJavaList(rowMarshaller(row)))
+      row => (mapAsJavaMap(keyMarshaller(row)), seqAsJavaList(rowMarshaller(row)))
     }.saveAsNewAPIHadoopFile(
       conf.get(OUTPUT_KEYSPACE_CONFIG),
       classOf[java.util.Map[String, ByteBuffer]],

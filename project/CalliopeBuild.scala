@@ -43,6 +43,8 @@ object CalliopeBuild extends Build {
 
       scalaVersion := SCALA_VERSION,
 
+      scalacOptions := Seq("-unchecked", "-deprecation"),
+
       dependencies,
 
       parallelExecution in Test := false,
