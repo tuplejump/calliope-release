@@ -25,6 +25,14 @@ import com.tuplejump.calliope.thrift.ThriftCassandraSparkContext
 import com.tuplejump.calliope.cql3.Cql3CassandraSparkContext
 
 object Implicits {
+
+  type CQLColumnName = String
+  type CQLColumnValue = ByteBuffer
+
+  type ThriftRowKey = ByteBuffer
+  type ThriftColumnName = ByteBuffer
+  type ThriftColumnValue = ByteBuffer
+
   implicit def RddToCassandraRDDFunctions[U](rdd: RDD[U]) =
     new CassandraRDDFunctions[U](rdd)
 
@@ -32,4 +40,3 @@ object Implicits {
 
   implicit def SparkContext2Cql3CasSparkContext(sc: SparkContext) = new Cql3CassandraSparkContext(sc)
 }
-

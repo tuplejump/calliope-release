@@ -196,7 +196,7 @@ class ThriftCasBuilder(keyspace: String,
 
     val predicate = new SlicePredicate()
     columns map {
-      case colList: List[String] =>
+      case colList: List[_] =>
         predicate.setColumn_names(colList.map(col => ByteBufferUtil.bytes(col)))
     }
 

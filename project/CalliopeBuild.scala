@@ -13,6 +13,7 @@ object CalliopeBuild extends Build {
   lazy val calliope = {
     val dependencies = libraryDependencies ++= Seq(
       "org.spark-project" %% "spark-core" % SPARK_VERSION % "provided",
+      "org.spark-project" %% "spark-streaming" % SPARK_VERSION % "provided",
       "org.apache.cassandra" % "cassandra-all" % CAS_VERSION intransitive(),
       "org.apache.cassandra" % "cassandra-thrift" % CAS_VERSION intransitive(),
       "org.apache.thrift" % "libthrift" % THRIFT_VERSION exclude("org.slf4j", "slf4j-api") exclude("javax.servlet", "servlet-api"),
@@ -21,8 +22,7 @@ object CalliopeBuild extends Build {
     )
 
 
-    val pom = (
-      <scm>
+    val pom = { <scm>
         <url>git@github.com:tuplejump/calliope.git</url>
         <connection>scm:git:git@github.com:tuplejump/calliope.git</connection>
       </scm>
@@ -32,7 +32,7 @@ object CalliopeBuild extends Build {
             <name>Rohit Rai</name>
             <url>https://twitter.com/milliondreams</url>
           </developer>
-        </developers>)
+        </developers> }
 
     val calliopeSettings = Seq(
       name := "calliope",
@@ -42,6 +42,8 @@ object CalliopeBuild extends Build {
       version := VERSION,
 
       scalaVersion := SCALA_VERSION,
+
+      scalacOptions := Seq("-unchecked", "-deprecation"),
 
       dependencies,
 
@@ -56,6 +58,8 @@ object CalliopeBuild extends Build {
       },
 
       publishMavenStyle := true,
+
+      retrieveManaged := true,
 
       publishTo <<= version {
         (v: String) =>
