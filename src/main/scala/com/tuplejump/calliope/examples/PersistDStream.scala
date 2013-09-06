@@ -26,6 +26,7 @@ import com.tuplejump.calliope.utils.RichByteBuffer._
 import com.tuplejump.calliope.Implicits._
 import com.tuplejump.calliope.CasBuilder
 import java.nio.ByteBuffer
+import com.tuplejump.calliope.Types.{CQLRowValues, CQLRowKeyMap}
 
 /**
  * A dummy network stream can be run using a unix tool Netcat like this
@@ -53,8 +54,8 @@ object PersistDStream {
     val wordCounts: DStream[(String, Int)] = words.map(x => (x, 1)).reduceByKey(_ + _)
 
     // Provide row and key marshaller
-    implicit def keyMarshaller(x: (String, Int)): Map[String, ByteBuffer] = Map("word" -> x._1)
-    implicit def rowMarshaller(x: (String, Int)): List[ByteBuffer] = List(x._2)
+    implicit def keyMarshaller(x: (String, Int)): CQLRowKeyMap = Map("word" -> x._1)
+    implicit def rowMarshaller(x: (String, Int)): CQLRowValues = List(x._2)
 
     wordCounts.foreach(_ cql3SaveToCassandra cas)
     ssc.start()

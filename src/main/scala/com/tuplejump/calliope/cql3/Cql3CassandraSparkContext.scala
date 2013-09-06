@@ -22,6 +22,7 @@ package com.tuplejump.calliope.cql3
 import spark.{RDD, SparkContext}
 import java.nio.ByteBuffer
 import com.tuplejump.calliope.{Cql3CasBuilder, CasBuilder}
+import com.tuplejump.calliope.Types.{CQLRowMap, CQLRowKeyMap}
 
 class Cql3CassandraSparkContext(self: SparkContext) {
 
@@ -40,7 +41,7 @@ class Cql3CassandraSparkContext(self: SparkContext) {
    * @return RDD[T]
    */
   def cql3Cassandra[T](host: String, port: String, keyspace: String, columnFamily: String)
-                      (implicit unmarshaller: (Map[String, ByteBuffer], Map[String, ByteBuffer]) => T,
+                      (implicit unmarshaller: (CQLRowKeyMap, CQLRowMap) => T,
                        tm: Manifest[T]): RDD[T] = {
     val cas = CasBuilder.cql3.withColumnFamily(keyspace, columnFamily).onHost(host).onPort(port)
     this.cql3Cassandra[T](cas)
@@ -59,7 +60,7 @@ class Cql3CassandraSparkContext(self: SparkContext) {
    * @return RDD[T]
    */
   def cql3Cassandra[T](keyspace: String, columnFamily: String)
-                      (implicit unmarshaller: (Map[String, ByteBuffer], Map[String, ByteBuffer]) => T,
+                      (implicit unmarshaller: (CQLRowKeyMap, CQLRowMap) => T,
                        tm: Manifest[T]): RDD[T] = {
     val cas = CasBuilder.cql3.withColumnFamily(keyspace, columnFamily)
     this.cql3Cassandra[T](cas)
@@ -79,8 +80,8 @@ class Cql3CassandraSparkContext(self: SparkContext) {
    * @return RDD[K, V]
    */
   def cql3Cassandra[K, V](keyspace: String, columnFamily: String)
-                         (implicit keyUnmarshaller: Map[String, ByteBuffer] => K,
-                          rowUnmarshaller: Map[String, ByteBuffer] => V,
+                         (implicit keyUnmarshaller: CQLRowKeyMap => K,
+                          rowUnmarshaller: CQLRowMap => V,
                           km: Manifest[K], kv: Manifest[V]): RDD[(K, V)] = {
     val cas = CasBuilder.cql3.withColumnFamily(keyspace, columnFamily)
     this.cql3Cassandra[K, V](cas)
@@ -103,8 +104,8 @@ class Cql3CassandraSparkContext(self: SparkContext) {
    * @return RDD[K, V]
    */
   def cql3Cassandra[K, V](host: String, port: String, keyspace: String, columnFamily: String)
-                         (implicit keyUnmarshaller: Map[String, ByteBuffer] => K,
-                          rowUnmarshaller: Map[String, ByteBuffer] => V,
+                         (implicit keyUnmarshaller: CQLRowKeyMap => K,
+                          rowUnmarshaller: CQLRowMap => V,
                           km: Manifest[K], kv: Manifest[V]): RDD[(K, V)] = {
     val cas = CasBuilder.cql3.withColumnFamily(keyspace, columnFamily).onHost(host).onPort(port)
     this.cql3Cassandra[K, V](cas)
@@ -120,7 +121,7 @@ class Cql3CassandraSparkContext(self: SparkContext) {
    * @return RDD[T]
    */
   def cql3Cassandra[T](cas: Cql3CasBuilder)
-                      (implicit unmarshaller: (Map[String, ByteBuffer], Map[String, ByteBuffer]) => T,
+                      (implicit unmarshaller: (CQLRowKeyMap, CQLRowMap) => T,
                        tm: Manifest[T]): RDD[T] = {
     new Cql3CassandraRDD[T](self, cas, unmarshaller)
   }
@@ -137,8 +138,8 @@ class Cql3CassandraSparkContext(self: SparkContext) {
    * @return RDD[K, V]
    */
   def cql3Cassandra[K, V](cas: Cql3CasBuilder)
-                         (implicit keyUnmarshaller: Map[String, ByteBuffer] => K,
-                          rowUnmarshaller: Map[String, ByteBuffer] => V,
+                         (implicit keyUnmarshaller: CQLRowKeyMap => K,
+                          rowUnmarshaller: CQLRowMap => V,
                           km: Manifest[K], kv: Manifest[V]): RDD[(K, V)] = {
 
     implicit def xmer = Cql3CasHelper.kvTransformer(keyUnmarshaller, rowUnmarshaller)
@@ -147,10 +148,10 @@ class Cql3CassandraSparkContext(self: SparkContext) {
 }
 
 private object Cql3CasHelper {
-  def kvTransformer[K, V](keyUnmarshaller: Map[String, ByteBuffer] => K,
-                          rowUnmarshaller: Map[String, ByteBuffer] => V) = {
+  def kvTransformer[K, V](keyUnmarshaller: CQLRowKeyMap => K,
+                          rowUnmarshaller: CQLRowMap => V) = {
     {
-      (k: Map[String, ByteBuffer], v: Map[String, ByteBuffer]) => {
+      (k: CQLRowKeyMap, v: CQLRowMap) => {
         (keyUnmarshaller(k), rowUnmarshaller(v))
       }
     }

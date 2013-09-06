@@ -23,6 +23,8 @@ import spark.{RDD, SparkContext}
 import java.nio.ByteBuffer
 import com.tuplejump.calliope.{ThriftCasBuilder, CasBuilder}
 
+import com.tuplejump.calliope.Types._
+
 class ThriftCassandraSparkContext(self: SparkContext) {
 
   /**
@@ -39,7 +41,7 @@ class ThriftCassandraSparkContext(self: SparkContext) {
    * @return RDD[T]
    */
   def thriftCassandra[T](host: String, port: String, keyspace: String, columnFamily: String)
-                        (implicit unmarshaller: (ByteBuffer, Map[ByteBuffer, ByteBuffer]) => T,
+                        (implicit unmarshaller: (ThriftRowKey, ThriftRowMap) => T,
                          tm: Manifest[T]): RDD[T] = {
     val cas = CasBuilder.thrift.withColumnFamily(keyspace, columnFamily).onHost(host).onPort(port)
     this.thriftCassandra[T](cas)
@@ -57,7 +59,7 @@ class ThriftCassandraSparkContext(self: SparkContext) {
    * @return RDD[T]
    */
   def thriftCassandra[T](keyspace: String, columnFamily: String)
-                        (implicit unmarshaller: (ByteBuffer, Map[ByteBuffer, ByteBuffer]) => T,
+                        (implicit unmarshaller: (ThriftRowKey, ThriftRowMap) => T,
                          tm: Manifest[T]): RDD[T] = {
     val cas = CasBuilder.thrift.withColumnFamily(keyspace, columnFamily)
     this.thriftCassandra[T](cas)
@@ -76,8 +78,8 @@ class ThriftCassandraSparkContext(self: SparkContext) {
    * @return RDD[K, V]
    */
   def thriftCassandra[K, V](keyspace: String, columnFamily: String)
-                           (implicit keyUnmarshaller: ByteBuffer => K,
-                            rowUnmarshaller: Map[ByteBuffer, ByteBuffer] => V,
+                           (implicit keyUnmarshaller: ThriftRowKey => K,
+                            rowUnmarshaller: ThriftRowMap => V,
                             km: Manifest[K], kv: Manifest[V]): RDD[(K, V)] = {
     val cas = CasBuilder.thrift.withColumnFamily(keyspace, columnFamily)
     this.thriftCassandra[K, V](cas)
@@ -99,8 +101,8 @@ class ThriftCassandraSparkContext(self: SparkContext) {
    * @return RDD[K, V]
    */
   def thriftCassandra[K, V](host: String, port: String, keyspace: String, columnFamily: String)
-                           (implicit keyUnmarshaller: ByteBuffer => K,
-                            rowUnmarshaller: Map[ByteBuffer, ByteBuffer] => V,
+                           (implicit keyUnmarshaller: ThriftRowKey => K,
+                            rowUnmarshaller: ThriftRowMap => V,
                             km: Manifest[K], kv: Manifest[V]): RDD[(K, V)] = {
     val cas = CasBuilder.thrift.withColumnFamily(keyspace, columnFamily)
     this.thriftCassandra[K, V](cas)
@@ -116,7 +118,7 @@ class ThriftCassandraSparkContext(self: SparkContext) {
    * @return RDD[T]
    */
   def thriftCassandra[T](cas: ThriftCasBuilder)
-                        (implicit unmarshaller: (ByteBuffer, Map[ByteBuffer, ByteBuffer]) => T,
+                        (implicit unmarshaller: (ThriftRowKey, ThriftRowMap) => T,
                          tm: Manifest[T]): RDD[T] = {
     new ThriftCassandraRDD[T](self, cas, unmarshaller)
   }
@@ -133,8 +135,8 @@ class ThriftCassandraSparkContext(self: SparkContext) {
    * @return RDD[K, V]
    */
   def thriftCassandra[K, V](cas: ThriftCasBuilder)
-                           (implicit keyUnmarshaller: ByteBuffer => K,
-                            rowUnmarshaller: Map[ByteBuffer, ByteBuffer] => V,
+                           (implicit keyUnmarshaller: ThriftRowKey => K,
+                            rowUnmarshaller: ThriftRowMap => V,
                             km: Manifest[K], kv: Manifest[V]): RDD[(K, V)] = {
 
     implicit def xmer = ThriftCasHelper.kvTransformer(keyUnmarshaller, rowUnmarshaller)
@@ -144,10 +146,10 @@ class ThriftCassandraSparkContext(self: SparkContext) {
 
 
 private object ThriftCasHelper {
-  def kvTransformer[K, V](keyUnmarshaller: ByteBuffer => K,
-                          rowUnmarshaller: Map[ByteBuffer, ByteBuffer] => V) = {
+  def kvTransformer[K, V](keyUnmarshaller: ThriftRowKey => K,
+                          rowUnmarshaller: ThriftRowMap => V) = {
     {
-      (k: ByteBuffer, v: Map[ByteBuffer, ByteBuffer]) => {
+      (k: ThriftRowKey, v: ThriftRowMap) => {
         (keyUnmarshaller(k), rowUnmarshaller(v))
       }
     }

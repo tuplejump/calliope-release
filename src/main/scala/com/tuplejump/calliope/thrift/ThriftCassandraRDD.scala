@@ -29,11 +29,12 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import com.tuplejump.calliope.{ThriftCasBuilder}
 import com.tuplejump.calliope.utils.CassandraPartition
+import com.tuplejump.calliope.Types.{ThriftRowMap, ThriftRowKey}
 
 
 class ThriftCassandraRDD[T: Manifest](sc: SparkContext,
-                                                        @transient cas: ThriftCasBuilder,
-                                                        unmarshaller: (ByteBuffer, Map[ByteBuffer, ByteBuffer]) => T)
+                                      @transient cas: ThriftCasBuilder,
+                                      unmarshaller: (ThriftRowKey, ThriftRowMap) => T)
   extends RDD[T](sc, Nil)
   with HadoopMapReduceUtil
   with Logging {

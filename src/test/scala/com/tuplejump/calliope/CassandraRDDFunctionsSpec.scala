@@ -8,6 +8,8 @@ import java.util.UUID
 import com.tuplejump.calliope.utils.RichByteBuffer
 import RichByteBuffer._
 import com.tuplejump.calliope.Implicits._
+import com.tuplejump.calliope.Types._
+import com.tuplejump.calliope.Employee
 
 
 class CassandraRDDFunctionsSpec extends FunSpec with BeforeAndAfterAll with ShouldMatchers with MustMatchers {
@@ -114,11 +116,11 @@ private object CRDDFuncTransformers {
 
   import RichByteBuffer._
 
-  implicit def rddToKey(x: (String, Int, String, String)): ByteBuffer = {
+  implicit def rddToKey(x: (String, Int, String, String)): ThriftRowKey = {
     UUID.nameUUIDFromBytes((x._1 + x._2 + x._3 + x._4).getBytes()).toString
   }
 
-  implicit def lordsToColumns(x: (String, Int, String, String)): Map[ByteBuffer, ByteBuffer] = {
+  implicit def lordsToColumns(x: (String, Int, String, String)): ThriftRowMap = {
     Map[ByteBuffer, ByteBuffer](
       "name" -> x._1,
       "age" -> x._2,
@@ -127,22 +129,22 @@ private object CRDDFuncTransformers {
     )
   }
 
-  implicit def columnsToLords(m: Map[ByteBuffer, ByteBuffer]): (String, Int, String, String) = {
+  implicit def columnsToLords(m: ThriftRowMap): (String, Int, String, String) = {
     (m.getOrElse[ByteBuffer]("name", "NO_NAME"),
       m.getOrElse[ByteBuffer]("age", 0),
       m.getOrElse[ByteBuffer]("tribe", "NOT KNOWN"),
       m.getOrElse[ByteBuffer]("from", "a land far far away"))
   }
 
-  implicit def EmployeeToKeys(e: Employee): Map[String, ByteBuffer] = {
+  implicit def EmployeeToKeys(e: Employee): CQLRowKeyMap = {
     Map("deptid" -> e.deptId, "empid" -> e.empId)
   }
 
-  implicit def EmployeeToVal(e: Employee): List[ByteBuffer] = {
+  implicit def EmployeeToVal(e: Employee): CQLRowValues = {
     List(e.firstName, e.lastName)
   }
 
-  implicit def EmployeeToMap(e: Employee): Map[String, ByteBuffer] = {
+  implicit def EmployeeToMap(e: Employee): CQLRowMap = {
     Map("deptid" -> e.deptId, "empid" -> e.empId, "first_name" -> e.firstName, "last_name" -> e.lastName)
   }
 

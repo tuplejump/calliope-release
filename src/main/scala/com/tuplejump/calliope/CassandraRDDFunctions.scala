@@ -33,11 +33,10 @@ import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
 import scala.Predef._
 
+import Types._
 
 class CassandraRDDFunctions[U](self: RDD[U])
   extends Logging with HadoopMapReduceUtil with Serializable {
-
-  import Implicits._
 
   private final val OUTPUT_KEYSPACE_CONFIG: String = "cassandra.output.keyspace"
   private final val OUTPUT_CQL: String = "cassandra.output.cql"
@@ -52,7 +51,7 @@ class CassandraRDDFunctions[U](self: RDD[U])
    *
    */
   def thriftSaveToCassandra(keyspace: String, columnFamily: String)
-                           (implicit keyMarshaller: U => ThriftRowKey, rowMarshaller: U => Map[ThriftColumnName, ThriftColumnValue]) {
+                           (implicit keyMarshaller: U => ThriftRowKey, rowMarshaller: U => ThriftRowMap) {
     thriftSaveToCassandra(CasBuilder.thrift.withColumnFamily(keyspace, columnFamily))
   }
 
@@ -69,7 +68,7 @@ class CassandraRDDFunctions[U](self: RDD[U])
    *
    */
   def thriftSaveToCassandra(host: String, port: String, keyspace: String, columnFamily: String)
-                           (implicit keyMarshaller: U => ThriftRowKey, rowMarshaller: U => Map[ThriftColumnName, ThriftColumnValue]) {
+                           (implicit keyMarshaller: U => ThriftRowKey, rowMarshaller: U => ThriftRowMap) {
     thriftSaveToCassandra(CasBuilder.thrift.withColumnFamily(keyspace, columnFamily).onHost(host).onPort(port))
   }
 
@@ -85,7 +84,7 @@ class CassandraRDDFunctions[U](self: RDD[U])
    *
    */
   def thriftSaveToCassandra(cas: ThriftCasBuilder)
-                           (implicit keyMarshaller: U => ThriftRowKey, rowMarshaller: U => Map[ThriftColumnName, ThriftColumnValue]) {
+                           (implicit keyMarshaller: U => ThriftRowKey, rowMarshaller: U => ThriftRowMap) {
 
 
     val conf = cas.configuration
@@ -131,7 +130,7 @@ class CassandraRDDFunctions[U](self: RDD[U])
    */
 
   def cql3SaveToCassandra(keyspace: String, columnFamily: String, updateCql: String)
-                         (implicit keyMarshaller: U => Map[CQLColumnName, CQLColumnValue], rowMarshaller: U => List[CQLColumnValue]) {
+                         (implicit keyMarshaller: U => CQLRowKeyMap, rowMarshaller: U => CQLRowValues) {
     cql3SaveToCassandra(CasBuilder.cql3.withColumnFamily(keyspace, columnFamily).saveWithQuery(updateCql))
   }
 
@@ -152,7 +151,7 @@ class CassandraRDDFunctions[U](self: RDD[U])
    *
    */
   def cql3SaveToCassandra(host: String, port: String, keyspace: String, columnFamily: String, updateCql: String)
-                         (implicit keyMarshaller: U => Map[CQLColumnName, CQLColumnValue], rowMarshaller: U => List[CQLColumnValue]) {
+                         (implicit keyMarshaller: U => CQLRowKeyMap, rowMarshaller: U => CQLRowValues) {
     cql3SaveToCassandra(CasBuilder.cql3.withColumnFamily(keyspace, columnFamily)
       .onHost(host)
       .onPort(port)
@@ -171,7 +170,7 @@ class CassandraRDDFunctions[U](self: RDD[U])
    *
    */
   def cql3SaveToCassandra(cas: Cql3CasBuilder)
-                         (implicit keyMarshaller: U => Map[CQLColumnName, CQLColumnValue], rowMarshaller: U => List[CQLColumnValue]) {
+                         (implicit keyMarshaller: U => CQLRowKeyMap, rowMarshaller: U => CQLRowValues) {
     val conf = cas.configuration
 
     require(conf.get(OUTPUT_CQL) != null && !conf.get(OUTPUT_CQL).isEmpty,
@@ -188,8 +187,8 @@ class CassandraRDDFunctions[U](self: RDD[U])
     )
   }
 
-  def simpleSavetoCas(keyspace: String, columnFamily: String, keyCols: List[String], valueCols: List[String])
-                     (implicit marshaller: U => Map[String, ByteBuffer], um: ClassManifest[U]) {
+  def simpleSavetoCas(keyspace: String, columnFamily: String, keyCols: List[CQLKeyColumnName], valueCols: List[CQLColumnName])
+                     (implicit marshaller: U => CQLRowMap) {
     import com.tuplejump.calliope.Implicits._
     val valPart = valueCols.map(_ + " = ?").mkString(",")
 
@@ -205,11 +204,9 @@ class CassandraRDDFunctions[U](self: RDD[U])
         (keysMap, valuesMap)
     }
 
-    implicit def keyMarshaller(r: (Map[String, ByteBuffer], Map[String, ByteBuffer])) = r._1
-    implicit def valueMarshaller(r: (Map[String, ByteBuffer], Map[String, ByteBuffer])) = r._2.values.toList
+    implicit def keyMarshaller(r: (CQLRowKeyMap, CQLRowMap)) = r._1
+    implicit def valueMarshaller(r: (CQLRowKeyMap, CQLRowMap)) = r._2.values.toList
 
     mappedSelf.cql3SaveToCassandra(cas)
   }
-
-
 }

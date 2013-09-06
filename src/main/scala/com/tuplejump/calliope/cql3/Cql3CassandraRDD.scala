@@ -28,11 +28,12 @@ import java.util.Date
 import org.apache.cassandra.hadoop.cql3.CqlPagingInputFormat
 import com.tuplejump.calliope.{CasBuilder}
 import com.tuplejump.calliope.utils.CassandraPartition
+import com.tuplejump.calliope.Types.{CQLRowMap, CQLRowKeyMap}
 
 
-private[calliope] class Cql3CassandraRDD[T: Manifest](sc: SparkContext,
-                                                      @transient cas: CasBuilder,
-                                                      unmarshaller: (Map[String, ByteBuffer], Map[String, ByteBuffer]) => T)
+private[calliope] class Cql3CassandraRDD[T: ClassManifest](sc: SparkContext,
+                                            @transient cas: CasBuilder,
+                                            unmarshaller: (CQLRowKeyMap, CQLRowMap) => T)
   extends RDD[T](sc, Nil)
   with HadoopMapReduceUtil
   with Logging {

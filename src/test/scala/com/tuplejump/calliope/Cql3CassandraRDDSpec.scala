@@ -8,6 +8,8 @@ import com.tuplejump.calliope.utils.RichByteBuffer
 import RichByteBuffer._
 
 import Implicits._
+import com.tuplejump.calliope.Types.{CQLRowMap, CQLRowKeyMap, ThriftRowMap, ThriftRowKey}
+import org.apache.cassandra.thrift.CqlRow
 
 /**
  * To run this test you need a Cassandra cluster up and running
@@ -66,15 +68,11 @@ private object Cql3CRDDTransformers {
 
   import RichByteBuffer._
 
-  implicit def row2String(key: ByteBuffer, row: Map[ByteBuffer, ByteBuffer]): List[String] = {
+  implicit def row2String(key: ThriftRowKey, row: ThriftRowMap): List[String] = {
     row.keys.toList
   }
 
-  /* implicit def cql3Row2Mapss(keys: Map[String, ByteBuffer], values: Map[String, ByteBuffer]): (Map[String, String], Map[String, String]) = {
-    (keys, values)
-  }  */
-
-  implicit def cql3Row2Emp(keys: Map[String, ByteBuffer], values: Map[String, ByteBuffer]): Employee =
+  implicit def cql3Row2Emp(keys: CQLRowKeyMap, values: CQLRowMap): Employee =
     Employee(keys.get("deptid").get, keys.get("empid").get, values.get("first_name").get, values.get("last_name").get)
 }
 
