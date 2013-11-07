@@ -1,13 +1,13 @@
 package com.tuplejump.calliope
 
 import org.scalatest.{BeforeAndAfterAll, FunSpec}
-import spark.{Partition, SparkContext}
 import org.scalatest.matchers.{MustMatchers, ShouldMatchers}
 import java.nio.ByteBuffer
 import com.tuplejump.calliope.utils.RichByteBuffer
-import RichByteBuffer._
+import org.apache.spark.SparkContext
 
 import Implicits._
+import Cql3CRDDTransformers._
 
 /**
  * To run this test you need a Cassandra cluster up and running
@@ -30,7 +30,6 @@ class Cql3CassandraRDDSpec extends FunSpec with BeforeAndAfterAll with ShouldMat
     it("should be able to build and process RDD[U]") {
       val cas = CasBuilder.cql3.withColumnFamily("cql3_test", "emp_read_test")
 
-      import Cql3CRDDTransformers._
       val casrdd = sc.cql3Cassandra[Employee](cas)
 
       val result = casrdd.collect().toList
@@ -43,7 +42,6 @@ class Cql3CassandraRDDSpec extends FunSpec with BeforeAndAfterAll with ShouldMat
     it("should be able to use secodary indexes") {
       val cas = CasBuilder.cql3.withColumnFamily("cql3_test", "emp_read_test").where("first_name = 'john'")
 
-      import Cql3CRDDTransformers._
       val casrdd = sc.cql3Cassandra[Employee](cas)
 
       val result = casrdd.collect().toList

@@ -19,22 +19,21 @@
 
 package com.tuplejump.calliope
 
-import spark.{Logging, RDD}
-import org.apache.hadoop.mapreduce.HadoopMapReduceUtil
+import org.apache.spark.Logging
+import org.apache.hadoop.mapreduce.SparkHadoopMapReduceUtil
 import java.nio.ByteBuffer
 import org.apache.cassandra.thrift.{Column, Mutation, ColumnOrSuperColumn}
 import org.apache.cassandra.hadoop.ColumnFamilyOutputFormat
-import scala.collection.JavaConversions._
 
-import spark.SparkContext._
+import org.apache.spark.SparkContext._
 import org.apache.cassandra.hadoop.cql3.CqlOutputFormat
 
 import scala.collection.JavaConversions._
-import scala.collection.JavaConverters._
+import org.apache.spark.rdd.RDD
 
 
 class CassandraRDDFunctions[U](self: RDD[U])
-  extends Logging with HadoopMapReduceUtil with Serializable {
+  extends Logging with SparkHadoopMapReduceUtil with Serializable {
 
   private final val OUTPUT_KEYSPACE_CONFIG: String = "cassandra.output.keyspace"
   private final val OUTPUT_CQL: String = "cassandra.output.cql"

@@ -19,9 +19,10 @@
 
 package com.tuplejump.calliope.thrift
 
-import spark.{RDD, SparkContext}
 import java.nio.ByteBuffer
 import com.tuplejump.calliope.{ThriftCasBuilder, CasBuilder}
+import org.apache.spark.rdd.RDD
+import org.apache.spark.SparkContext
 
 class ThriftCassandraSparkContext(self: SparkContext) {
 

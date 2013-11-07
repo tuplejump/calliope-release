@@ -19,10 +19,10 @@
 
 package com.tuplejump.calliope
 
-import spark.{SparkContext, RDD}
-import java.nio.ByteBuffer
 import com.tuplejump.calliope.thrift.ThriftCassandraSparkContext
 import com.tuplejump.calliope.cql3.Cql3CassandraSparkContext
+import org.apache.spark.SparkContext
+import org.apache.spark.rdd.RDD
 
 object Implicits {
   implicit def RddToCassandraRDDFunctions[U](rdd: RDD[U]) =
