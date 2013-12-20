@@ -12,6 +12,13 @@ For more information visit - http://tuplejump.github.com/calliope
 
 You can download the library from [here](http://bit.ly/19X0niT)
 
+## Spark 0.7.3
+
+This release of Calliope was compiled against Spark 0.7.3 and you are using Spark 0.8.x. The packages in spark changed upon its move to Apache and so you are seeing the ClassNotFound exception.
+
+You could either wait for our next release to be done in Feb '14 or you could sign up to get access to our early access reposittory at http://tuplejjump.github.io/calliope
+
+
 ## Add to Maven
 
 ```xml
