@@ -19,9 +19,10 @@
 
 package com.tuplejump.calliope.cql3
 
-import spark.{RDD, SparkContext}
 import java.nio.ByteBuffer
 import com.tuplejump.calliope.{Cql3CasBuilder, CasBuilder}
+import org.apache.spark.rdd.RDD
+import org.apache.spark.SparkContext
 import com.tuplejump.calliope.Types.{CQLRowMap, CQLRowKeyMap}
 
 class Cql3CassandraSparkContext(self: SparkContext) {

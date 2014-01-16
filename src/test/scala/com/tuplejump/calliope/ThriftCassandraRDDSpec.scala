@@ -1,11 +1,11 @@
 package com.tuplejump.calliope
 
 import org.scalatest.{BeforeAndAfterAll, FunSpec}
-import spark.{Partition, SparkContext}
 import org.scalatest.matchers.{MustMatchers, ShouldMatchers}
 import java.nio.ByteBuffer
 import com.tuplejump.calliope.utils.RichByteBuffer
 import RichByteBuffer._
+import org.apache.spark.SparkContext
 
 import Implicits._
 import com.tuplejump.calliope.Types.{CQLRowMap, CQLRowKeyMap, ThriftRowMap, ThriftRowKey}
