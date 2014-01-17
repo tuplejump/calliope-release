@@ -21,7 +21,6 @@ package com.tuplejump.calliope.utils
 
 import java.nio.ByteBuffer
 import org.apache.cassandra.utils.ByteBufferUtil
-import java.nio.charset.Charset
 
 object RichByteBuffer {
 

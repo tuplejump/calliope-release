@@ -2,12 +2,13 @@ package com.tuplejump.calliope
 
 import org.scalatest.{BeforeAndAfterAll, FunSpec}
 import org.scalatest.matchers.{MustMatchers, ShouldMatchers}
-import spark.SparkContext
+import org.apache.spark.SparkContext
 import java.nio.ByteBuffer
 import java.util.UUID
 import com.tuplejump.calliope.utils.RichByteBuffer
 import RichByteBuffer._
 import com.tuplejump.calliope.Implicits._
+import com.tuplejump.calliope.Types._
 
 
 class CassandraRDDFunctionsSpec extends FunSpec with BeforeAndAfterAll with ShouldMatchers with MustMatchers {
@@ -22,7 +23,9 @@ class CassandraRDDFunctionsSpec extends FunSpec with BeforeAndAfterAll with Shou
 
   describe("Cassandra RDD Function") {
     it("should allow persistence of any RDD to cassandra") {
+
       import CRDDFuncTransformers._
+
 
       val data = List(
         ("Frodo", 24, "hobbit", "shire"),
@@ -46,7 +49,8 @@ class CassandraRDDFunctionsSpec extends FunSpec with BeforeAndAfterAll with Shou
     }
 
     it("should allow persistence using CQL") {
-      import CRDDFuncTransformers._
+      import CRDDFuncTransformers.EmployeeToKeys
+      import CRDDFuncTransformers.EmployeeToVal
       import Cql3CRDDTransformers._
 
       val data = List(
@@ -73,7 +77,36 @@ class CassandraRDDFunctionsSpec extends FunSpec with BeforeAndAfterAll with Shou
       result should contain(Employee(21, 110, "alan", "turing"))
 
     }
+
+    it("should allow persistence using Simple API via CQL") {
+      import Cql3CRDDTransformers._
+      import CRDDFuncTransformers.EmployeeToMap
+
+      val casrdd = sc.cql3Cassandra[Employee](CQL_TEST_KEYSPACE, CQL_TEST_OUTPUT_COLUMN_FAMILY)
+      val initCount = casrdd.collect().length
+
+      val data = List(
+        Employee(31, 210, "emily", "richards"),
+        Employee(31, 211, "fanie", "mae"),
+        Employee(32, 208, "godric", "wolf"),
+        Employee(33, 202, "harry", "potter")
+      )
+
+      val rdd = sc.parallelize(data)
+
+      rdd.simpleSavetoCas(CQL_TEST_KEYSPACE,
+        CQL_TEST_OUTPUT_COLUMN_FAMILY,
+        List("deptid", "empid"), List("first_name", "last_name"))
+
+      val result = casrdd.collect()
+
+      result must have length (initCount + 4)
+
+      result should contain(Employee(31, 210, "emily", "richards"))
+
+    }
   }
+
 
   override def afterAll() {
     sc.stop()
@@ -84,11 +117,11 @@ private object CRDDFuncTransformers {
 
   import RichByteBuffer._
 
-  implicit def rddToKey(x: (String, Int, String, String)): ByteBuffer = {
+  implicit def rddToKey(x: (String, Int, String, String)): ThriftRowKey = {
     UUID.nameUUIDFromBytes((x._1 + x._2 + x._3 + x._4).getBytes()).toString
   }
 
-  implicit def lordsToColumns(x: (String, Int, String, String)): Map[ByteBuffer, ByteBuffer] = {
+  implicit def lordsToColumns(x: (String, Int, String, String)): ThriftRowMap = {
     Map[ByteBuffer, ByteBuffer](
       "name" -> x._1,
       "age" -> x._2,
@@ -97,19 +130,23 @@ private object CRDDFuncTransformers {
     )
   }
 
-  implicit def columnsToLords(m: Map[ByteBuffer, ByteBuffer]): (String, Int, String, String) = {
+  implicit def columnsToLords(m: ThriftRowMap): (String, Int, String, String) = {
     (m.getOrElse[ByteBuffer]("name", "NO_NAME"),
       m.getOrElse[ByteBuffer]("age", 0),
       m.getOrElse[ByteBuffer]("tribe", "NOT KNOWN"),
       m.getOrElse[ByteBuffer]("from", "a land far far away"))
   }
 
-  implicit def EmployeeToKeys(e: Employee): Map[String, ByteBuffer] = {
+  implicit def EmployeeToKeys(e: Employee): CQLRowKeyMap = {
     Map("deptid" -> e.deptId, "empid" -> e.empId)
   }
 
-  implicit def EmployeeToVal(e: Employee): List[ByteBuffer] = {
+  implicit def EmployeeToVal(e: Employee): CQLRowValues = {
     List(e.firstName, e.lastName)
+  }
+
+  implicit def EmployeeToMap(e: Employee): CQLRowMap = {
+    Map("deptid" -> e.deptId, "empid" -> e.empId, "first_name" -> e.firstName, "last_name" -> e.lastName)
   }
 
 }

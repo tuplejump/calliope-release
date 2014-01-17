@@ -19,12 +19,29 @@
 
 package com.tuplejump.calliope
 
-import spark.{SparkContext, RDD}
-import java.nio.ByteBuffer
 import com.tuplejump.calliope.thrift.ThriftCassandraSparkContext
 import com.tuplejump.calliope.cql3.Cql3CassandraSparkContext
+import org.apache.spark.SparkContext
+import org.apache.spark.rdd.RDD
+import java.nio.ByteBuffer
+
+object Types{
+  type CQLRowKeyMap = Map[CQLColumnName, CQLColumnValue]
+  type CQLRowMap = Map[CQLColumnName, CQLColumnValue]
+  type CQLRowValues = List[CQLColumnValue]
+  type CQLKeyColumnName = String
+  type CQLColumnName = String
+  type CQLColumnValue = ByteBuffer
+
+  type ThriftRowKey = ByteBuffer
+  type ThriftColumnName = ByteBuffer
+  type ThriftColumnValue = ByteBuffer
+  type ThriftRowMap = Map[ThriftColumnName, ThriftColumnValue]
+}
+
 
 object Implicits {
+
   implicit def RddToCassandraRDDFunctions[U](rdd: RDD[U]) =
     new CassandraRDDFunctions[U](rdd)
 
@@ -32,4 +49,3 @@ object Implicits {
 
   implicit def SparkContext2Cql3CasSparkContext(sc: SparkContext) = new Cql3CassandraSparkContext(sc)
 }
-

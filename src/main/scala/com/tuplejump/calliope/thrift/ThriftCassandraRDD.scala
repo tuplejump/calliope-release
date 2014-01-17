@@ -19,23 +19,24 @@
 
 package com.tuplejump.calliope.thrift
 
-import spark._
-import org.apache.hadoop.mapreduce.{TaskAttemptID, JobID, HadoopMapReduceUtil, InputSplit}
-import org.apache.hadoop.io.Writable
 import org.apache.cassandra.hadoop.ColumnFamilyInputFormat
 import java.nio.ByteBuffer
 import scala.collection.JavaConversions._
 import java.text.SimpleDateFormat
 import java.util.Date
-import com.tuplejump.calliope.{ThriftCasBuilder}
-import com.tuplejump.calliope.utils.CassandraPartition
+import com.tuplejump.calliope.ThriftCasBuilder
+import org.apache.spark._
+import org.apache.spark.rdd.RDD
+import com.tuplejump.calliope.utils.{SparkHadoopMapReduceUtil, CassandraPartition}
+import com.tuplejump.calliope.Types.{ThriftRowMap, ThriftRowKey}
+import org.apache.hadoop.mapreduce.{InputSplit, TaskAttemptID, JobID}
 
 
 class ThriftCassandraRDD[T: Manifest](sc: SparkContext,
-                                                        @transient cas: ThriftCasBuilder,
-                                                        unmarshaller: (ByteBuffer, Map[ByteBuffer, ByteBuffer]) => T)
+                                      @transient cas: ThriftCasBuilder,
+                                      unmarshaller: (ThriftRowKey, ThriftRowMap) => T)
   extends RDD[T](sc, Nil)
-  with HadoopMapReduceUtil
+  with SparkHadoopMapReduceUtil
   with Logging {
 
   // A Hadoop Configuration can be about 10 KB, which is pretty big, so broadcast it

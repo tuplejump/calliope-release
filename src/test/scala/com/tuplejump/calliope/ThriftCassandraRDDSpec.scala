@@ -1,13 +1,14 @@
 package com.tuplejump.calliope
 
 import org.scalatest.{BeforeAndAfterAll, FunSpec}
-import spark.{Partition, SparkContext}
 import org.scalatest.matchers.{MustMatchers, ShouldMatchers}
 import java.nio.ByteBuffer
 import com.tuplejump.calliope.utils.RichByteBuffer
 import RichByteBuffer._
+import org.apache.spark.SparkContext
 
 import Implicits._
+import com.tuplejump.calliope.Types.{CQLRowMap, CQLRowKeyMap, ThriftRowMap, ThriftRowKey}
 
 /**
  * To run this test you need a Cassandra cluster up and running
@@ -53,11 +54,11 @@ private object ThriftCRDDTransformers {
 
   import RichByteBuffer._
 
-  implicit def row2String(key: ByteBuffer, row: Map[ByteBuffer, ByteBuffer]): List[String] = {
+  implicit def row2String(key: ThriftRowKey, row: ThriftRowMap): List[String] = {
     row.keys.toList
   }
 
-  implicit def cql3Row2Mapss(keys: Map[String, ByteBuffer], values: Map[String, ByteBuffer]): (Map[String, String], Map[String, String]) = {
+  implicit def cql3Row2Mapss(keys: CQLRowKeyMap, values: CQLRowMap): (Map[String, String], Map[String, String]) = {
     (keys, values)
   }
 }
