@@ -19,7 +19,6 @@
 
 package com.tuplejump.calliope.thrift
 
-import org.apache.hadoop.mapreduce._
 import org.apache.cassandra.hadoop.ColumnFamilyInputFormat
 import java.nio.ByteBuffer
 import scala.collection.JavaConversions._
@@ -28,8 +27,9 @@ import java.util.Date
 import com.tuplejump.calliope.ThriftCasBuilder
 import org.apache.spark._
 import org.apache.spark.rdd.RDD
-import com.tuplejump.calliope.utils.CassandraPartition
+import com.tuplejump.calliope.utils.{SparkHadoopMapReduceUtil, CassandraPartition}
 import com.tuplejump.calliope.Types.{ThriftRowMap, ThriftRowKey}
+import org.apache.hadoop.mapreduce.{InputSplit, TaskAttemptID, JobID}
 
 
 class ThriftCassandraRDD[T: Manifest](sc: SparkContext,

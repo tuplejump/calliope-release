@@ -18,15 +18,15 @@ You can download the library from [here](http://bit.ly/19X0niT)
 <dependency>
   <groupId>com.tuplejump</groupId>
   <artifactId>calliope_2.9.3</artifactId>
-  <version>0.7.3-1</version>
+  <version>0.8.1</version>
 </dependency>
 ```
 
 ## Add to SBT
 ```scala
-libraryDependencies += "com.tuplejump" %% "calliope" % "0.7.3-1"
+libraryDependencies += "com.tuplejump" %% "calliope" % "0.8.1"
 ```
 
 **Note on Scala version**
-Calliope is buil with Scala 2.9.3, the same version as the current release of Spark. In future when Spark moves on to newer Scala version, we will try to keep releasing Calliope with all the versions of Scala for which Spark is available.
+Calliope is built with Scala 2.9.3, the same version as the current release of Spark. In future when Spark moves on to newer Scala version, we will try to keep releasing Calliope with all the versions of Scala for which Spark is available.
 

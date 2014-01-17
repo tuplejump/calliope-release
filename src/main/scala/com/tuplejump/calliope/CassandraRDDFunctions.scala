@@ -19,18 +19,21 @@
 
 package com.tuplejump.calliope
 
+
 import org.apache.spark.Logging
-import org.apache.hadoop.mapreduce.SparkHadoopMapReduceUtil
-import java.nio.ByteBuffer
 import org.apache.cassandra.thrift.{Column, Mutation, ColumnOrSuperColumn}
 import org.apache.cassandra.hadoop.ColumnFamilyOutputFormat
 
 import org.apache.spark.SparkContext._
+import org.apache.spark.rdd.RDD
+
 import org.apache.cassandra.hadoop.cql3.CqlOutputFormat
 
 import scala.collection.JavaConversions._
-import org.apache.spark.rdd.RDD
 
+import java.nio.ByteBuffer
+
+import com.tuplejump.calliope.utils.SparkHadoopMapReduceUtil
 import Types._
 
 class CassandraRDDFunctions[U](self: RDD[U])
@@ -45,7 +48,7 @@ class CassandraRDDFunctions[U](self: RDD[U])
    * @param keyspace Keyspace to save the RDD
    * @param columnFamily ColumnFamily to save the RDD
    * @param keyMarshaller The Marshaller, that takes in an RDD entry:U and gives a row key
-   * @param rowMarshaller The Marshaller, that takes in an RDD entry:U and gives a map for columns
+   * @param rowMarshaller The Marshaller, that takes in an RDD entry:U and gives a msap for columns
    *
    */
   def thriftSaveToCassandra(keyspace: String, columnFamily: String)
@@ -91,11 +94,11 @@ class CassandraRDDFunctions[U](self: RDD[U])
     self.map[(ByteBuffer, java.util.List[Mutation])] {
       x => (x, mapToMutations(x))
     }.saveAsNewAPIHadoopFile(
-      conf.get(OUTPUT_KEYSPACE_CONFIG),
-      classOf[ByteBuffer],
-      classOf[List[Mutation]],
-      classOf[ColumnFamilyOutputFormat],
-      conf)
+        conf.get(OUTPUT_KEYSPACE_CONFIG),
+        classOf[ByteBuffer],
+        classOf[List[Mutation]],
+        classOf[ColumnFamilyOutputFormat],
+        conf)
 
     def mapToMutations(m: Map[ByteBuffer, ByteBuffer]): List[Mutation] = {
       m.map {
@@ -177,12 +180,12 @@ class CassandraRDDFunctions[U](self: RDD[U])
     self.map[(java.util.Map[String, ByteBuffer], java.util.List[ByteBuffer])] {
       row => (mapAsJavaMap(keyMarshaller(row)), seqAsJavaList(rowMarshaller(row)))
     }.saveAsNewAPIHadoopFile(
-      conf.get(OUTPUT_KEYSPACE_CONFIG),
-      classOf[java.util.Map[String, ByteBuffer]],
-      classOf[java.util.List[ByteBuffer]],
-      classOf[CqlOutputFormat],
-      conf
-    )
+        conf.get(OUTPUT_KEYSPACE_CONFIG),
+        classOf[java.util.Map[String, ByteBuffer]],
+        classOf[java.util.List[ByteBuffer]],
+        classOf[CqlOutputFormat],
+        conf
+      )
   }
 
   def simpleSavetoCas(keyspace: String, columnFamily: String, keyCols: List[CQLKeyColumnName], valueCols: List[CQLColumnName])
