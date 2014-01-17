@@ -20,8 +20,8 @@
 package com.tuplejump.calliope.examples
 
 
-import spark.streaming.{DStream, Seconds, StreamingContext}
-import spark.streaming.StreamingContext._
+import org.apache.spark.streaming.{DStream, Seconds, StreamingContext}
+import org.apache.spark.streaming.StreamingContext._
 import com.tuplejump.calliope.utils.RichByteBuffer._
 import com.tuplejump.calliope.Implicits._
 import com.tuplejump.calliope.CasBuilder

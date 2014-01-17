@@ -2,14 +2,13 @@ package com.tuplejump.calliope
 
 import org.scalatest.{BeforeAndAfterAll, FunSpec}
 import org.scalatest.matchers.{MustMatchers, ShouldMatchers}
-import spark.SparkContext
+import org.apache.spark.SparkContext
 import java.nio.ByteBuffer
 import java.util.UUID
 import com.tuplejump.calliope.utils.RichByteBuffer
 import RichByteBuffer._
 import com.tuplejump.calliope.Implicits._
 import com.tuplejump.calliope.Types._
-import com.tuplejump.calliope.Employee
 
 
 class CassandraRDDFunctionsSpec extends FunSpec with BeforeAndAfterAll with ShouldMatchers with MustMatchers {
@@ -24,7 +23,9 @@ class CassandraRDDFunctionsSpec extends FunSpec with BeforeAndAfterAll with Shou
 
   describe("Cassandra RDD Function") {
     it("should allow persistence of any RDD to cassandra") {
+
       import CRDDFuncTransformers._
+
 
       val data = List(
         ("Frodo", 24, "hobbit", "shire"),
