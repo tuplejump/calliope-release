@@ -10,13 +10,6 @@ We hope Calliope will also be the muse for your epic data poetry!
 For more information visit - http://tuplejump.github.com/calliope
 
 
-## Spark 0.7.3
-
-This release of Calliope was compiled against Spark 0.7.3 and you are using Spark 0.8.x. The packages in spark changed upon its move to Apache and so you are seeing the ClassNotFound exception.
-
-You could either wait for our next release to be done in Feb '14 or you could sign up to get access to our early access reposittory at http://tuplejjump.github.io/calliope
-
-
 ## Download Binary
 
 ** This is the GA release of Calliope working with Spark 0.8.1, if you are using Spark 0.9.0 use 0.9.0-EA release, and use the free sign up for the code access aand support at http://tuplejump.github.io/calliope **
