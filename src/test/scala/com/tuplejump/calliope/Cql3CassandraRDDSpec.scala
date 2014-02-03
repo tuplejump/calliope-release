@@ -1,13 +1,14 @@
 package com.tuplejump.calliope
 
 import org.scalatest.{BeforeAndAfterAll, FunSpec}
-import spark.{Partition, SparkContext}
 import org.scalatest.matchers.{MustMatchers, ShouldMatchers}
 import java.nio.ByteBuffer
 import com.tuplejump.calliope.utils.RichByteBuffer
-import RichByteBuffer._
+import org.apache.spark.SparkContext
 
 import Implicits._
+import com.tuplejump.calliope.Types.{CQLRowMap, CQLRowKeyMap, ThriftRowMap, ThriftRowKey}
+import org.apache.cassandra.thrift.CqlRow
 
 /**
  * To run this test you need a Cassandra cluster up and running
@@ -15,6 +16,9 @@ import Implicits._
  *
  */
 class Cql3CassandraRDDSpec extends FunSpec with BeforeAndAfterAll with ShouldMatchers with MustMatchers {
+
+
+  import Cql3CRDDTransformers._
 
   val CASSANDRA_NODE_COUNT = 3
   val CASSANDRA_NODE_LOCATIONS = List("127.0.0.1", "127.0.0.2", "127.0.0.3")
@@ -28,9 +32,9 @@ class Cql3CassandraRDDSpec extends FunSpec with BeforeAndAfterAll with ShouldMat
 
   describe("Cql3 Cassandra RDD") {
     it("should be able to build and process RDD[U]") {
+
       val cas = CasBuilder.cql3.withColumnFamily("cql3_test", "emp_read_test")
 
-      import Cql3CRDDTransformers._
       val casrdd = sc.cql3Cassandra[Employee](cas)
 
       val result = casrdd.collect().toList
@@ -43,7 +47,6 @@ class Cql3CassandraRDDSpec extends FunSpec with BeforeAndAfterAll with ShouldMat
     it("should be able to use secodary indexes") {
       val cas = CasBuilder.cql3.withColumnFamily("cql3_test", "emp_read_test").where("first_name = 'john'")
 
-      import Cql3CRDDTransformers._
       val casrdd = sc.cql3Cassandra[Employee](cas)
 
       val result = casrdd.collect().toList
@@ -66,15 +69,11 @@ private object Cql3CRDDTransformers {
 
   import RichByteBuffer._
 
-  implicit def row2String(key: ByteBuffer, row: Map[ByteBuffer, ByteBuffer]): List[String] = {
+  implicit def row2String(key: ThriftRowKey, row: ThriftRowMap): List[String] = {
     row.keys.toList
   }
 
-  /* implicit def cql3Row2Mapss(keys: Map[String, ByteBuffer], values: Map[String, ByteBuffer]): (Map[String, String], Map[String, String]) = {
-    (keys, values)
-  }  */
-
-  implicit def cql3Row2Emp(keys: Map[String, ByteBuffer], values: Map[String, ByteBuffer]): Employee =
+  implicit def cql3Row2Emp(keys: CQLRowKeyMap, values: CQLRowMap): Employee =
     Employee(keys.get("deptid").get, keys.get("empid").get, values.get("first_name").get, values.get("last_name").get)
 }
 

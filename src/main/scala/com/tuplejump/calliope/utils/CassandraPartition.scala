@@ -20,8 +20,8 @@
 package com.tuplejump.calliope.utils
 
 import org.apache.hadoop.mapreduce.InputSplit
-import spark.{SerializableWritable, Partition}
 import org.apache.hadoop.io.Writable
+import org.apache.spark.{SerializableWritable, Partition}
 
 case class CassandraPartition(rddId: Int, val idx: Int, @transient s: InputSplit) extends Partition {
 

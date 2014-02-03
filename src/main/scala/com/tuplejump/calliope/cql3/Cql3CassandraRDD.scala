@@ -19,22 +19,23 @@
 
 package com.tuplejump.calliope.cql3
 
-import spark._
-import org.apache.hadoop.mapreduce.{TaskAttemptID, JobID, HadoopMapReduceUtil, InputSplit}
-import java.nio.ByteBuffer
+import org.apache.hadoop.mapreduce.{TaskAttemptID, JobID, InputSplit}
 import scala.collection.JavaConversions._
 import java.text.SimpleDateFormat
 import java.util.Date
 import org.apache.cassandra.hadoop.cql3.CqlPagingInputFormat
-import com.tuplejump.calliope.{CasBuilder}
-import com.tuplejump.calliope.utils.CassandraPartition
+import com.tuplejump.calliope.CasBuilder
+import org.apache.spark._
+import org.apache.spark.rdd.RDD
+import com.tuplejump.calliope.utils.{SparkHadoopMapReduceUtil, CassandraPartition}
+import com.tuplejump.calliope.Types.{CQLRowMap, CQLRowKeyMap}
 
 
-private[calliope] class Cql3CassandraRDD[T: Manifest](sc: SparkContext,
-                                                      @transient cas: CasBuilder,
-                                                      unmarshaller: (Map[String, ByteBuffer], Map[String, ByteBuffer]) => T)
+private[calliope] class Cql3CassandraRDD[T: ClassManifest](sc: SparkContext,
+                                                           @transient cas: CasBuilder,
+                                                           unmarshaller: (CQLRowKeyMap, CQLRowMap) => T)
   extends RDD[T](sc, Nil)
-  with HadoopMapReduceUtil
+  with SparkHadoopMapReduceUtil
   with Logging {
 
   // A Hadoop Configuration can be about 10 KB, which is pretty big, so broadcast it

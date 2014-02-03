@@ -57,7 +57,7 @@ class RichByteBufferSpec extends FunSpec with ShouldMatchers with MustMatchers {
 
       val p = list2Tuple2(l)
 
-      p.isInstanceOf[Tuple2[String, Int]] must be(true)
+      p.isInstanceOf[Tuple2[_, _]] must be(true)
 
       p._1 must be("Joey")
       p._2 must be(10)
@@ -65,5 +65,3 @@ class RichByteBufferSpec extends FunSpec with ShouldMatchers with MustMatchers {
 
   }
 }
-
-
