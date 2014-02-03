@@ -1,5 +1,6 @@
 Calliope
 ========
+
 Calliope is a library providing an interface to consume data from Cassandra to spark and store RDDs from Spark to Cassandra.
 
 In Greek mythology, Calliope (/kəˈlaɪ.əpiː/ kə-ly-ə-pee; Ancient Greek: Καλλιόπη Kalliopē "beautiful-voiced") was the muse of epic poetry,daughter of Zeus and Mnemosyne, and is believed to be Homer's muse, the inspiration for the Odyssey and the Iliad.
@@ -10,7 +11,9 @@ For more information visit - http://tuplejump.github.com/calliope
 
 ## Download Binary
 
-You can download the library from [here](http://bit.ly/1dC3kbZ)
+** This is the GA release of Calliope working with Spark 0.8.1, if you are using Spark 0.9.0 use 0.9.0-EA release, and use the free sign up for the code access aand support at http://tuplejump.github.io/calliope **
+
+You can download the library from [here](http://bit.ly/LIFRM6)
 
 ## Add to Maven
 
@@ -18,13 +21,13 @@ You can download the library from [here](http://bit.ly/1dC3kbZ)
 <dependency>
   <groupId>com.tuplejump</groupId>
   <artifactId>calliope_2.9.3</artifactId>
-  <version>0.8.1-EA</version>
+  <version>0.8.1</version>
 </dependency>
 ```
 
 ## Add to SBT
 ```scala
-libraryDependencies += "com.tuplejump" %% "calliope" % "0.8.1-EA"
+libraryDependencies += "com.tuplejump" %% "calliope" % "0.8.1"
 ```
 
 **Note on Scala version**
