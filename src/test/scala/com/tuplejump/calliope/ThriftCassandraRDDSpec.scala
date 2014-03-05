@@ -4,21 +4,18 @@ import org.scalatest.{BeforeAndAfterAll, FunSpec}
 import org.scalatest.matchers.{MustMatchers, ShouldMatchers}
 import java.nio.ByteBuffer
 import com.tuplejump.calliope.utils.RichByteBuffer
+import RichByteBuffer._
 import org.apache.spark.SparkContext
 
-import com.tuplejump.calliope.Implicits._
+import Implicits._
 import com.tuplejump.calliope.Types.{CQLRowMap, CQLRowKeyMap, ThriftRowMap, ThriftRowKey}
-import org.apache.cassandra.thrift.CqlRow
 
 /**
  * To run this test you need a Cassandra cluster up and running
  * and run the data-script.cli in it to create the data.
  *
  */
-class Cql3CassandraRDDSpec extends FunSpec with BeforeAndAfterAll with ShouldMatchers with MustMatchers {
-
-
-  import Cql3CRDDTransformers._
+class ThriftCassandraRDDSpec extends FunSpec with BeforeAndAfterAll with ShouldMatchers with MustMatchers {
 
   val CASSANDRA_NODE_COUNT = 3
   val CASSANDRA_NODE_LOCATIONS = List("127.0.0.1", "127.0.0.2", "127.0.0.3")
@@ -28,47 +25,38 @@ class Cql3CassandraRDDSpec extends FunSpec with BeforeAndAfterAll with ShouldMat
 
   info("Describes the functionality provided by the Cassandra RDD")
 
-  val sc = new SparkContext("local[1]", "castest")
+  val sc = new SparkContext("local", "castest")
 
-  describe("Cql3 Cassandra RDD") {
-    it("should be able to build and process RDD[U]") {
+  describe("Thrift Cassandra RDD") {
 
-      val cas = CasBuilder.cql3.withColumnFamily("cql3_test", "emp_read_test")
+    it("should be able to build and process RDD[K,V]") {
+      val cas = CasBuilder.thrift.withColumnFamily(TEST_KEYSPACE, TEST_INPUT_COLUMN_FAMILY)
 
-      val casrdd = sc.cql3Cassandra[Employee](cas)
+      val casrdd = sc.thriftCassandra[String, Map[String, String]](cas)
+      //This is same as calling,
+      //val casrdd = sc.cassandra[String, Map[String, String]](TEST_KEYSPACE, TEST_INPUT_COLUMN_FAMILY)
 
-      val result = casrdd.collect().toList
+      val result = casrdd.collect().toMap
 
-      result must have length (5)
-      result should contain(Employee(20, 105, "jack", "carpenter"))
-      result should contain(Employee(20, 106, "john", "grumpy"))
-    }
+      val resultKeys = result.keys
 
-
-    it("should be able to query selected columns") {
-      val cas = CasBuilder.cql3.withColumnFamily("cql3_test", "emp_read_test").columns("first_name", "last_name")
-
-      val casrdd = sc.cql3Cassandra[(String, String)](cas)
-
-      val result = casrdd.collect().toList
-
-      result must have length (5)
-      result should contain(("jack", "carpenter"))
-      result should contain(("john", "grumpy"))
+      resultKeys must be(Set("3musk001", "thelostworld001", "3musk003", "3musk002", "thelostworld002"))
 
     }
 
-    it("should be able to use secodary indexes") {
-      val cas = CasBuilder.cql3.withColumnFamily("cql3_test", "emp_read_test").where("first_name = 'john'")
 
-      val casrdd = sc.cql3Cassandra[Employee](cas)
+    it("should be able to select certain columns from Cassandra to build RDD") {
+      val cas = CasBuilder.thrift.withColumnFamily(TEST_KEYSPACE, TEST_INPUT_COLUMN_FAMILY).columns("book")
 
-      val result = casrdd.collect().toList
+      val casrdd = sc.thriftCassandra[String, Map[String, String]](cas)
+      //This is same as calling,
+      //val casrdd = sc.cassandra[String, Map[String, String]](TEST_KEYSPACE, TEST_INPUT_COLUMN_FAMILY)
 
-      result must have length (1)
-      result should contain(Employee(20, 106, "john", "grumpy"))
+      val result = casrdd.take(1).head
 
-      result should not contain (Employee(20, 105, "jack", "carpenter"))
+      val resultValues = result._2.keySet
+
+      resultValues.size must be(1)
     }
 
 
@@ -79,19 +67,15 @@ class Cql3CassandraRDDSpec extends FunSpec with BeforeAndAfterAll with ShouldMat
   }
 }
 
-object Cql3CRDDTransformers {
+private object ThriftCRDDTransformers {
 
-  import com.tuplejump.calliope.utils.RichByteBuffer._
+  import RichByteBuffer._
 
   implicit def row2String(key: ThriftRowKey, row: ThriftRowMap): List[String] = {
     row.keys.toList
   }
 
-  implicit def cql3Row2Emp(keys: CQLRowKeyMap, values: CQLRowMap): Employee =
-    Employee(keys.get("deptid").get, keys.get("empid").get, values.get("first_name").get, values.get("last_name").get)
-
-  implicit def cql3Row2EmpName(keys: CQLRowKeyMap, values: CQLRowMap): (String, String) =
-    (values.get("first_name").get, values.get("last_name").get)
+  implicit def cql3Row2Mapss(keys: CQLRowKeyMap, values: CQLRowMap): (Map[String, String], Map[String, String]) = {
+    (keys, values)
+  }
 }
-
-case class Employee(deptId: Int, empId: Int, firstName: String, lastName: String)
