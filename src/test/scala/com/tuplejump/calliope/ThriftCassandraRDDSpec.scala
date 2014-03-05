@@ -4,18 +4,21 @@ import org.scalatest.{BeforeAndAfterAll, FunSpec}
 import org.scalatest.matchers.{MustMatchers, ShouldMatchers}
 import java.nio.ByteBuffer
 import com.tuplejump.calliope.utils.RichByteBuffer
-import RichByteBuffer._
 import org.apache.spark.SparkContext
 
-import Implicits._
+import com.tuplejump.calliope.Implicits._
 import com.tuplejump.calliope.Types.{CQLRowMap, CQLRowKeyMap, ThriftRowMap, ThriftRowKey}
+import org.apache.cassandra.thrift.CqlRow
 
 /**
  * To run this test you need a Cassandra cluster up and running
  * and run the data-script.cli in it to create the data.
  *
  */
-class ThriftCassandraRDDSpec extends FunSpec with BeforeAndAfterAll with ShouldMatchers with MustMatchers {
+class Cql3CassandraRDDSpec extends FunSpec with BeforeAndAfterAll with ShouldMatchers with MustMatchers {
+
+
+  import Cql3CRDDTransformers._
 
   val CASSANDRA_NODE_COUNT = 3
   val CASSANDRA_NODE_LOCATIONS = List("127.0.0.1", "127.0.0.2", "127.0.0.3")
@@ -25,24 +28,50 @@ class ThriftCassandraRDDSpec extends FunSpec with BeforeAndAfterAll with ShouldM
 
   info("Describes the functionality provided by the Cassandra RDD")
 
-  val sc = new SparkContext("local", "castest")
+  val sc = new SparkContext("local[1]", "castest")
 
-  describe("Thrift Cassandra RDD") {
+  describe("Cql3 Cassandra RDD") {
+    it("should be able to build and process RDD[U]") {
 
-    it("should be able to build and process RDD[K,V]") {
-      val cas = CasBuilder.thrift.withColumnFamily(TEST_KEYSPACE, TEST_INPUT_COLUMN_FAMILY)
+      val cas = CasBuilder.cql3.withColumnFamily("cql3_test", "emp_read_test")
 
-      val casrdd = sc.thriftCassandra[String, Map[String, String]](cas)
-      //This is same as calling,
-      //val casrdd = sc.cassandra[String, Map[String, String]](TEST_KEYSPACE, TEST_INPUT_COLUMN_FAMILY)
+      val casrdd = sc.cql3Cassandra[Employee](cas)
 
-      val result = casrdd.collect().toMap
+      val result = casrdd.collect().toList
 
-      val resultKeys = result.keys
+      result must have length (5)
+      result should contain(Employee(20, 105, "jack", "carpenter"))
+      result should contain(Employee(20, 106, "john", "grumpy"))
+    }
 
-      resultKeys must be(Set("3musk001", "thelostworld001", "3musk003", "3musk002", "thelostworld002"))
+
+    it("should be able to query selected columns") {
+      val cas = CasBuilder.cql3.withColumnFamily("cql3_test", "emp_read_test").columns("first_name", "last_name")
+
+      val casrdd = sc.cql3Cassandra[(String, String)](cas)
+
+      val result = casrdd.collect().toList
+
+      result must have length (5)
+      result should contain(("jack", "carpenter"))
+      result should contain(("john", "grumpy"))
 
     }
+
+    it("should be able to use secodary indexes") {
+      val cas = CasBuilder.cql3.withColumnFamily("cql3_test", "emp_read_test").where("first_name = 'john'")
+
+      val casrdd = sc.cql3Cassandra[Employee](cas)
+
+      val result = casrdd.collect().toList
+
+      result must have length (1)
+      result should contain(Employee(20, 106, "john", "grumpy"))
+
+      result should not contain (Employee(20, 105, "jack", "carpenter"))
+    }
+
+
   }
 
   override def afterAll() {
@@ -50,15 +79,19 @@ class ThriftCassandraRDDSpec extends FunSpec with BeforeAndAfterAll with ShouldM
   }
 }
 
-private object ThriftCRDDTransformers {
+object Cql3CRDDTransformers {
 
-  import RichByteBuffer._
+  import com.tuplejump.calliope.utils.RichByteBuffer._
 
   implicit def row2String(key: ThriftRowKey, row: ThriftRowMap): List[String] = {
     row.keys.toList
   }
 
-  implicit def cql3Row2Mapss(keys: CQLRowKeyMap, values: CQLRowMap): (Map[String, String], Map[String, String]) = {
-    (keys, values)
-  }
+  implicit def cql3Row2Emp(keys: CQLRowKeyMap, values: CQLRowMap): Employee =
+    Employee(keys.get("deptid").get, keys.get("empid").get, values.get("first_name").get, values.get("last_name").get)
+
+  implicit def cql3Row2EmpName(keys: CQLRowKeyMap, values: CQLRowMap): (String, String) =
+    (values.get("first_name").get, values.get("last_name").get)
 }
+
+case class Employee(deptId: Int, empId: Int, firstName: String, lastName: String)
